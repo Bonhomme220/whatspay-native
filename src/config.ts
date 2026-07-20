@@ -11,6 +11,9 @@ export const API_BASE_URL = 'https://app.whatspay.africa/api';
 /** Nom du token Sanctum créé côté backend (login → createToken('mobile-app')). */
 export const TOKEN_NAME = 'mobile-app';
 
+/** Canal WhatsApp officiel WhatsPAY (prompt d'abonnement). */
+export const WHATSAPP_CHANNEL_URL = 'https://whatsapp.com/channel/0029VbDB5VyISTkL0OHcht2n';
+
 /** Clés de stockage local (AsyncStorage). */
 export const STORAGE_KEYS = {
   token: '@whatspay/token',

@@ -18,6 +18,8 @@ import {DashboardData, fetchDashboard} from '../api/dashboard';
 import {apiErrorMessage} from '../api/client';
 import NudgeBanners from '../components/NudgeBanners';
 import NudgeModalView from '../components/NudgeModalView';
+import KycBanner from '../components/KycBanner';
+import WhatsAppChannelBanner from '../components/WhatsAppChannelBanner';
 import {acknowledgeIncident, fetchNudges, Nudge, NudgeCta} from '../api/nudges';
 
 type Nav = NativeStackNavigationProp<AppStackParamList>;
@@ -130,11 +132,14 @@ export default function DashboardScreen() {
         <ScrollView
           contentContainerStyle={styles.scroll}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}>
+          {/* Ordonnancement des bannières : KYC (compliance) → nudges (triés) → canal WhatsApp (bas) */}
+          <KycBanner />
           <NudgeBanners
             banners={banners.filter(b => !dismissed.includes(b.id))}
             onDismiss={id => setDismissed(prev => [...prev, id])}
             onCta={onCta}
           />
+          <WhatsAppChannelBanner show={data?.show_whatsapp_channel_modal} />
           {!!error && (
             <View style={styles.errorBox}>
               <Text style={styles.errorText}>{error}</Text>
