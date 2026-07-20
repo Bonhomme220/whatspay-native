@@ -130,6 +130,7 @@ export default function RegisterScreen({navigation}: Props) {
     if (step === 2) {
       if (!langId) return 'Choisis ta langue.';
       if (!studyId) return "Choisis ton niveau d'étude.";
+      if (!occupationId) return 'Choisis ta profession.';
       if (cats.length < 1) return 'Sélectionne au moins une catégorie.';
       if (types.length < 1) return 'Sélectionne au moins un type de contenu.';
       const v = parseInt(vues, 10);
@@ -228,7 +229,7 @@ export default function RegisterScreen({navigation}: Props) {
               <Text style={styles.subtitle}>Pour te proposer les bonnes campagnes.</Text>
               <Select label="Langue" options={langs} value={langId} onChange={setLangId} />
               <Select label="Niveau d'étude" options={studies} value={studyId} onChange={setStudyId} />
-              <Select label="Profession (optionnel)" options={occupations} value={occupationId} onChange={setOccupationId} placeholder="Non précisé" />
+              <Select label="Profession" options={occupations} value={occupationId} onChange={setOccupationId} />
               <MultiSelect label="Catégories" options={categories} values={cats} onToggle={id => toggle(cats, id, setCats, 4)} max={4} />
               <MultiSelect label="Types de contenu" options={contentTypes} values={types} onToggle={id => toggle(types, id, setTypes)} />
               <TextField label="Vues moyennes par Status" value={vues} onChangeText={setVues} placeholder="Ex : 250" keyboardType="number-pad" />
