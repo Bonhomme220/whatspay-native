@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -15,6 +15,7 @@ import type {AuthStackParamList} from '../navigation/RootNavigator';
 import {colors, font, radius, spacing} from '../theme';
 import {Button, TextField} from '../components/ui';
 import {MultiSelect, Select} from '../components/Select';
+import {DateField} from '../components/DateField';
 import {useAuth} from '../context/AuthContext';
 import {apiErrorMessage} from '../api/client';
 import {register} from '../api/auth';
@@ -24,6 +25,7 @@ import {
   fetchCountries,
   fetchLangs,
   fetchLocalities,
+  fetchOccupations,
   fetchStudies,
   Ref,
 } from '../api/reference';
@@ -35,6 +37,13 @@ export default function RegisterScreen({navigation}: Props) {
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
 
+  // Âge minimum 16 ans (contrainte backend) → date max sélectionnable
+  const maxBirthdate = useMemo(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 16);
+    return d;
+  }, []);
+
   // Données de référence
   const [countries, setCountries] = useState<Ref[]>([]);
   const [localities, setLocalities] = useState<Ref[]>([]);
@@ -42,6 +51,7 @@ export default function RegisterScreen({navigation}: Props) {
   const [contentTypes, setContentTypes] = useState<Ref[]>([]);
   const [langs, setLangs] = useState<Ref[]>([]);
   const [studies, setStudies] = useState<Ref[]>([]);
+  const [occupations, setOccupations] = useState<Ref[]>([]);
   const [locLoading, setLocLoading] = useState(false);
 
   // Champs
@@ -58,24 +68,27 @@ export default function RegisterScreen({navigation}: Props) {
   const [studyId, setStudyId] = useState('');
   const [cats, setCats] = useState<string[]>([]);
   const [types, setTypes] = useState<string[]>([]);
+  const [occupationId, setOccupationId] = useState('');
   const [vues, setVues] = useState('');
   const [ambassadorCode, setAmbassadorCode] = useState('');
 
   useEffect(() => {
     (async () => {
       try {
-        const [c, cat, ct, l, s] = await Promise.all([
+        const [c, cat, ct, l, s, occ] = await Promise.all([
           fetchCountries(),
           fetchCategories(),
           fetchContentTypes(),
           fetchLangs(),
           fetchStudies(),
+          fetchOccupations(),
         ]);
         setCountries(c);
         setCategories(cat);
         setContentTypes(ct);
         setLangs(l);
         setStudies(s);
+        setOccupations(occ);
       } catch {
         // le formulaire reste utilisable, les listes se rechargeront au besoin
       }
@@ -154,6 +167,7 @@ export default function RegisterScreen({navigation}: Props) {
         study_id: studyId,
         categories: cats,
         contentTypes: types,
+        occupation_id: occupationId || undefined,
         ambassador_code: ambassadorCode.trim() || undefined,
       });
 
@@ -204,7 +218,7 @@ export default function RegisterScreen({navigation}: Props) {
               <Text style={styles.subtitle}>Où diffuses-tu ?</Text>
               <Select label="Pays" options={countries} value={countryId} onChange={setCountryId} />
               <Select label="Ville" options={localities} value={localityId} onChange={setLocalityId} disabled={!countryId} loading={locLoading} />
-              <TextField label="Date de naissance (AAAA-MM-JJ)" value={birthdate} onChangeText={setBirthdate} placeholder="1998-05-20" />
+              <DateField label="Date de naissance" value={birthdate} onChange={setBirthdate} maximumDate={maxBirthdate} />
             </>
           )}
 
@@ -214,6 +228,7 @@ export default function RegisterScreen({navigation}: Props) {
               <Text style={styles.subtitle}>Pour te proposer les bonnes campagnes.</Text>
               <Select label="Langue" options={langs} value={langId} onChange={setLangId} />
               <Select label="Niveau d'étude" options={studies} value={studyId} onChange={setStudyId} />
+              <Select label="Profession (optionnel)" options={occupations} value={occupationId} onChange={setOccupationId} placeholder="Non précisé" />
               <MultiSelect label="Catégories" options={categories} values={cats} onToggle={id => toggle(cats, id, setCats, 4)} max={4} />
               <MultiSelect label="Types de contenu" options={contentTypes} values={types} onToggle={id => toggle(types, id, setTypes)} />
               <TextField label="Vues moyennes par Status" value={vues} onChangeText={setVues} placeholder="Ex : 250" keyboardType="number-pad" />
