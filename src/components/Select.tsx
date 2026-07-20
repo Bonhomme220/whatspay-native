@@ -110,7 +110,7 @@ export function MultiSelect({
       {!!label && (
         <Text style={styles.label}>
           {label}
-          {max ? ` (max ${max})` : ''}
+          {max ? ` (${values.length}/${max})` : ''}
         </Text>
       )}
       <View style={styles.chips}>
