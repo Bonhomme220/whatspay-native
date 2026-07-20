@@ -119,12 +119,24 @@ export default function ProfileScreen() {
               <Text style={styles.linkText}>🤝  Programme ambassadeur</Text>
               <Text style={styles.linkChevron}>›</Text>
             </TouchableOpacity>
+            <TouchableOpacity style={styles.linkRow} onPress={() => navigation.navigate('Complaints')}>
+              <Text style={styles.linkText}>⚠️  Mes réclamations</Text>
+              <Text style={styles.linkChevron}>›</Text>
+            </TouchableOpacity>
             <TouchableOpacity style={styles.linkRow} onPress={() => navigation.navigate('Tickets')}>
               <Text style={styles.linkText}>💬  Support</Text>
               <Text style={styles.linkChevron}>›</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.linkRow} onPress={() => navigation.navigate('Notifications')}>
               <Text style={styles.linkText}>🔔  Notifications</Text>
+              <Text style={styles.linkChevron}>›</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.linkRow} onPress={() => navigation.navigate('Faq')}>
+              <Text style={styles.linkText}>❓  FAQ</Text>
+              <Text style={styles.linkChevron}>›</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.linkRow} onPress={() => navigation.navigate('Settings')}>
+              <Text style={styles.linkText}>⚙️  Paramètres</Text>
               <Text style={styles.linkChevron}>›</Text>
             </TouchableOpacity>
           </View>

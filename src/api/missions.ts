@@ -30,7 +30,14 @@ export interface Mission {
   tracking_url?: string;
   task?: MissionTask;
   complaint?: any;
-  tracking?: any;
+  tracking_stats?: TrackingStats | null;
+}
+
+export interface TrackingStats {
+  total_clicks: number;
+  unique_clicks: number;
+  conversions: number;
+  conversion_rate: number;
 }
 
 export interface MissionsResponse {

@@ -1,6 +1,6 @@
-/** Design system minimal — couleurs WhatsPAY (vert) + espacements/typos. */
+/** Design system minimal — couleurs WhatsPAY (vert de marque #1BA24B) + espacements/typos. */
 export const colors = {
-  primary: '#16a34a',
+  primary: '#1BA24B',
   primaryDark: '#15803d',
   primaryLight: '#22c55e',
   primarySoft: '#dcfce7',

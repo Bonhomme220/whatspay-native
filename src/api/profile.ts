@@ -27,3 +27,35 @@ export async function fetchProfile(): Promise<ProfileData> {
   const {data} = await api.get<ProfileData>('/profile');
   return data;
 }
+
+/** POST /profile/change-password */
+export async function changePassword(
+  current_password: string,
+  new_password: string,
+  new_password_confirmation: string,
+): Promise<{success: boolean; message: string}> {
+  const {data} = await api.post('/profile/change-password', {
+    current_password,
+    new_password,
+    new_password_confirmation,
+  });
+  return data;
+}
+
+/** POST /profile/update-location — précise arrondissement + quartier. */
+export async function updateLocation(
+  arrondissement_locality_id: string,
+  quartier_locality_id: string,
+): Promise<{success: boolean; message: string}> {
+  const {data} = await api.post('/profile/update-location', {
+    arrondissement_locality_id,
+    quartier_locality_id,
+  });
+  return data;
+}
+
+/** POST /profile/delete-account — demande de suppression (motif requis). */
+export async function requestDeletion(reason: string): Promise<{success: boolean; message: string}> {
+  const {data} = await api.post('/profile/delete-account', {reason});
+  return data;
+}

@@ -13,6 +13,10 @@ import AmbassadorScreen from '../screens/AmbassadorScreen';
 import TicketsScreen from '../screens/TicketsScreen';
 import TicketDetailScreen from '../screens/TicketDetailScreen';
 import NewTicketScreen from '../screens/NewTicketScreen';
+import SettingsScreen from '../screens/SettingsScreen';
+import ComplaintsScreen from '../screens/ComplaintsScreen';
+import NewComplaintScreen from '../screens/NewComplaintScreen';
+import FaqScreen from '../screens/FaqScreen';
 import MainTabs from './MainTabs';
 import PushBootstrap from './PushBootstrap';
 import {navigationRef} from './navigationRef';
@@ -33,6 +37,10 @@ export type AppStackParamList = {
   Tickets: undefined;
   TicketDetail: {id: string};
   NewTicket: undefined;
+  Settings: undefined;
+  Complaints: undefined;
+  NewComplaint: {missionId: string};
+  Faq: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -61,6 +69,10 @@ function AppNavigator() {
         <AppStack.Screen name="Tickets" component={TicketsScreen} />
         <AppStack.Screen name="TicketDetail" component={TicketDetailScreen} />
         <AppStack.Screen name="NewTicket" component={NewTicketScreen} />
+        <AppStack.Screen name="Settings" component={SettingsScreen} />
+        <AppStack.Screen name="Complaints" component={ComplaintsScreen} />
+        <AppStack.Screen name="NewComplaint" component={NewComplaintScreen} />
+        <AppStack.Screen name="Faq" component={FaqScreen} />
       </AppStack.Navigator>
     </>
   );

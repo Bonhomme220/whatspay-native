@@ -123,6 +123,10 @@ export default function MissionDetailScreen({route, navigation}: Props) {
   const meta = statusMeta(mission.status);
   const canAccept = mission.status === 'ASSIGNED';
   const canSubmit = mission.status === 'PENDING' || mission.status === 'SUBMISSION_REJECTED';
+  // Réclamation possible sur toute mission déjà soumise (validée ou rejetée),
+  // hors campagnes de bienvenue et citoyennes.
+  const submitted = ['SUBMITED', 'SUBMISSION_ACCEPTED', 'SUBMISSION_REJECTED'].includes(mission.status);
+  const canComplain = submitted && !task?.is_onboarding && !task?.is_civic;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -140,6 +144,31 @@ export default function MissionDetailScreen({route, navigation}: Props) {
           <Text style={styles.gainLabel}>Gain estimé</Text>
           <Text style={styles.gainValue}>{money(mission.gain || mission.expected_gain)}</Text>
         </View>
+
+        {!!mission.tracking_stats && (
+          <View style={styles.perfCard}>
+            <Text style={styles.perfTitle}>Ma performance</Text>
+            <View style={styles.perfRow}>
+              <View style={styles.perf}>
+                <Text style={styles.perfValue}>{mission.tracking_stats.total_clicks}</Text>
+                <Text style={styles.perfLabel}>Clics</Text>
+              </View>
+              <View style={styles.perf}>
+                <Text style={styles.perfValue}>{mission.tracking_stats.unique_clicks}</Text>
+                <Text style={styles.perfLabel}>Uniques</Text>
+              </View>
+              <View style={styles.perf}>
+                <Text style={styles.perfValue}>{mission.tracking_stats.conversions}</Text>
+                <Text style={styles.perfLabel}>Conversions</Text>
+              </View>
+            </View>
+            {mission.tracking_stats.conversion_rate > 0 && (
+              <Text style={styles.perfRate}>
+                Taux de conversion : {mission.tracking_stats.conversion_rate}%
+              </Text>
+            )}
+          </View>
+        )}
 
         {!!task?.description && (
           <Section title="Description">
@@ -195,6 +224,14 @@ export default function MissionDetailScreen({route, navigation}: Props) {
             <Button title="Envoyer ma preuve" onPress={onSubmit} loading={busy} />
           </Section>
         )}
+
+        {canComplain && (
+          <TouchableOpacity
+            style={styles.complaintBtn}
+            onPress={() => navigation.navigate('NewComplaint', {missionId: id})}>
+            <Text style={styles.complaintText}>⚠️  Un problème sur cette mission ? Déposer une réclamation</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -231,6 +268,13 @@ const styles = StyleSheet.create({
   gainCard: {backgroundColor: colors.primary, borderRadius: radius.lg, padding: spacing.lg, marginTop: spacing.lg},
   gainLabel: {color: colors.primarySoft, fontSize: font.size.sm},
   gainValue: {color: colors.textOnPrimary, fontSize: font.size.xl, fontWeight: font.weight.bold, marginTop: 2},
+  perfCard: {backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg, marginTop: spacing.md, borderWidth: 1, borderColor: colors.border},
+  perfTitle: {fontSize: font.size.md, fontWeight: font.weight.bold, color: colors.text, marginBottom: spacing.md},
+  perfRow: {flexDirection: 'row', justifyContent: 'space-between'},
+  perf: {flex: 1, alignItems: 'center'},
+  perfValue: {fontSize: font.size.xl, fontWeight: font.weight.bold, color: colors.primary},
+  perfLabel: {fontSize: font.size.xs, color: colors.textMuted, marginTop: 2},
+  perfRate: {fontSize: font.size.xs, color: colors.textMuted, textAlign: 'center', marginTop: spacing.md},
   section: {marginTop: spacing.xl},
   sectionTitle: {fontSize: font.size.md, fontWeight: font.weight.bold, color: colors.text, marginBottom: spacing.sm},
   body: {fontSize: font.size.md, color: colors.text, lineHeight: 22},
@@ -244,4 +288,6 @@ const styles = StyleSheet.create({
   preview: {width: '100%', height: '100%'},
   changeText: {color: colors.primary, fontSize: font.size.sm, fontWeight: font.weight.medium, marginBottom: spacing.md},
   errorText: {color: colors.danger, fontSize: font.size.md, textAlign: 'center'},
+  complaintBtn: {marginTop: spacing.xl, padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, alignItems: 'center'},
+  complaintText: {fontSize: font.size.sm, color: colors.textMuted, fontWeight: font.weight.medium},
 });
