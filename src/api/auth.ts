@@ -19,6 +19,41 @@ export async function login(email: string, password: string): Promise<LoginResul
   return data;
 }
 
+export interface RegisterPayload {
+  firstname: string;
+  lastname: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+  phone: string;
+  phonecountry_id: string;
+  country_id: string;
+  locality_id: string;
+  birthdate: string; // YYYY-MM-DD
+  vuesmoyen: number;
+  lang_id: string;
+  study_id: string;
+  categories: string[];
+  contentTypes: string[];
+  occupation_id?: string;
+  ambassador_code?: string;
+  arrondissement_locality_id?: string;
+  quartier_locality_id?: string;
+}
+
+export interface RegisterResult {
+  token?: string;
+  profil?: 'DIFFUSEUR' | 'ANNONCEUR';
+  user?: AuthUser;
+  message?: string;
+}
+
+/** POST /auth/register → auto-login (token) si la vérification est bypassée, sinon message. */
+export async function register(payload: RegisterPayload): Promise<RegisterResult> {
+  const {data} = await api.post<RegisterResult>('/auth/register', payload);
+  return data;
+}
+
 /** POST /auth/logout (révoque le token courant côté serveur). Best-effort. */
 export async function logout(): Promise<void> {
   try {

@@ -5,12 +5,17 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useFocusEffect} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import type {AppStackParamList} from '../navigation/RootNavigator';
 import {colors, font, radius, spacing} from '../theme';
 import {Button} from '../components/ui';
+
+type Nav = NativeStackNavigationProp<AppStackParamList>;
 import {useAuth} from '../context/AuthContext';
 import {fetchProfile, ProfileData} from '../api/profile';
 import {apiErrorMessage} from '../api/client';
@@ -26,6 +31,7 @@ function InfoRow({label, value}: {label: string; value?: string | null}) {
 }
 
 export default function ProfileScreen() {
+  const navigation = useNavigation<Nav>();
   const {user, signOut} = useAuth();
   const [data, setData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -108,7 +114,22 @@ export default function ProfileScreen() {
             />
           </View>
 
-          <Button title="Se déconnecter" variant="outline" onPress={signOut} style={{marginTop: spacing.xl}} />
+          <View style={styles.links}>
+            <TouchableOpacity style={styles.linkRow} onPress={() => navigation.navigate('Ambassador')}>
+              <Text style={styles.linkText}>🤝  Programme ambassadeur</Text>
+              <Text style={styles.linkChevron}>›</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.linkRow} onPress={() => navigation.navigate('Tickets')}>
+              <Text style={styles.linkText}>💬  Support</Text>
+              <Text style={styles.linkChevron}>›</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.linkRow} onPress={() => navigation.navigate('Notifications')}>
+              <Text style={styles.linkText}>🔔  Notifications</Text>
+              <Text style={styles.linkChevron}>›</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Button title="Se déconnecter" variant="outline" onPress={signOut} style={{marginTop: spacing.lg}} />
         </ScrollView>
       )}
     </SafeAreaView>
@@ -131,4 +152,9 @@ const styles = StyleSheet.create({
   infoRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: spacing.md, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border},
   infoLabel: {fontSize: font.size.sm, color: colors.textMuted},
   infoValue: {fontSize: font.size.sm, color: colors.text, fontWeight: font.weight.medium, flexShrink: 1, textAlign: 'right', marginLeft: spacing.md},
+  links: {marginTop: spacing.xl, gap: spacing.sm},
+  linkRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.border},
+  linkText: {fontSize: font.size.md, color: colors.text, fontWeight: font.weight.medium},
+  linkChevron: {fontSize: font.size.xl, color: colors.textMuted},
 });
+

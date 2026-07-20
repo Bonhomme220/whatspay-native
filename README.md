@@ -2,12 +2,25 @@
 
 Application mobile native (bare React Native CLI + TypeScript) pour les diffuseurs/annonceurs WhatsPAY. Consomme l'API Laravel (Sanctum).
 
-## État actuel (1er jet)
+## État actuel
 
-- ✅ Fondations : navigation (React Navigation, native-stack), thème/design system, client API (axios + Bearer Sanctum), session persistée (AsyncStorage), déconnexion auto sur 401.
-- ✅ **Auth** : écran de connexion (avec gestion KYC requis / compte inactif), mot de passe oublié.
-- ✅ **Dashboard** : solde, stats (en cours, fiabilité), missions récentes, pull-to-refresh.
-- 🚧 **Inscription** : amorce (le parcours multi-étapes complet arrive au prochain jet).
+- ✅ Fondations : navigation (native-stack + onglets), thème/design system, client API (axios + Bearer Sanctum), session persistée (AsyncStorage), déconnexion auto sur 401.
+- ✅ **Auth** : connexion (KYC requis / compte inactif), mot de passe oublié, **inscription multi-étapes** (identité → localisation → profil de diffusion, auto-login).
+- ✅ **Dashboard** : solde, stats, missions récentes, cloche notifications.
+- ✅ **Missions** : liste (disponibles/en cours/terminées), détail, accepter, **soumettre une preuve** (capture + vues).
+- ✅ **Gains** : solde, cumuls, historique, **retrait** (mobile money / banque).
+- ✅ **Ambassadeur** : code partageable, filleuls, activation, saisie de code parrain.
+- ✅ **Support** : tickets (liste, détail/fil, création, réponse).
+- ✅ **Notifications** : push **natif FCM** (voir ci-dessous) + écran in-app (liste, lu/tout lire).
+
+## Notifications push natives (Firebase FCM)
+
+Le push est **natif** via `@react-native-firebase/messaging` + `@notifee/react-native` (vraies notifications système, foreground/background/quit, tap → navigation, token enregistré sur `POST /fcm-token`).
+
+**Config native requise (à faire une fois) :**
+1. Récupérer le **`google-services.json`** du projet Firebase WhatsPAY (celui qu'utilise déjà le backend `FcmService`) et le déposer dans **`android/app/google-services.json`**. *Sans ce fichier, le build Android échoue.*
+2. Le plugin Gradle `com.google.gms.google-services` est déjà branché (racine + app), la permission `POST_NOTIFICATIONS` est déclarée, et le background handler est enregistré dans `index.js`.
+3. iOS (plus tard, macOS requis) : clé APNs + `GoogleService-Info.plist`.
 
 ## Configuration
 
@@ -54,7 +67,7 @@ src/
 
 ## Prochaines étapes
 
-- Inscription multi-étapes (identité → localisation → profil de diffusion).
-- Onglets (missions, gains, profil), détail de mission + soumission de preuve (caméra).
-- Push FCM (enregistrement du token via `POST /fcm-token`).
-- Retraits, ambassadeur, tickets, notifications.
+- Déposer `google-services.json` puis builder l'APK et tester le flux complet sur appareil.
+- Sélecteur de date natif pour la date de naissance (actuellement AAAA-MM-JJ).
+- Détail de tracking par mission (clics/vues), réclamations, deep links.
+- Espace annonceur (l'API mobile le supporte : briefs, campagnes).

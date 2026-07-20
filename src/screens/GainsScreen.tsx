@@ -5,14 +5,20 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useFocusEffect} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import type {AppStackParamList} from '../navigation/RootNavigator';
 import {colors, font, radius, spacing} from '../theme';
+import {Button} from '../components/ui';
 import {fetchGains, GainsResponse, GainTransaction} from '../api/gains';
 import {apiErrorMessage} from '../api/client';
 import {money} from '../lib/status';
+
+type Nav = NativeStackNavigationProp<AppStackParamList>;
 
 function txMeta(t: GainTransaction) {
   const isDebit = t.type?.toLowerCase().includes('déb') || t.amount < 0 || t.description?.toLowerCase().includes('retrait');
@@ -45,6 +51,7 @@ function Row({t}: {t: GainTransaction}) {
 }
 
 export default function GainsScreen() {
+  const navigation = useNavigation<Nav>();
   const [data, setData] = useState<GainsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -99,6 +106,15 @@ export default function GainsScreen() {
                   <Text style={styles.pending}>Retrait en attente : {money(data?.pending_withdrawal)}</Text>
                 ) : null}
               </View>
+              <Button
+                title="Retirer mes gains"
+                onPress={() => navigation.navigate('Withdraw', {balance: data?.balance ?? 0})}
+                style={{marginBottom: spacing.lg}}
+              />
+              <TouchableOpacity style={styles.linkRow} onPress={() => navigation.navigate('Ambassador')}>
+                <Text style={styles.linkText}>🤝  Programme ambassadeur</Text>
+                <Text style={styles.linkChevron}>›</Text>
+              </TouchableOpacity>
               <View style={styles.chips}>
                 <Chip label="Ce mois" value={money(data?.this_month)} />
                 <Chip label="Total gagné" value={money(data?.total_gain)} />
@@ -140,6 +156,9 @@ const styles = StyleSheet.create({
   balanceLabel: {color: colors.primarySoft, fontSize: font.size.sm},
   balanceValue: {color: colors.textOnPrimary, fontSize: font.size.xxl, fontWeight: font.weight.bold, marginTop: 2},
   pending: {color: colors.primarySoft, fontSize: font.size.xs, marginTop: spacing.sm},
+  linkRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.lg, marginBottom: spacing.lg, borderWidth: 1, borderColor: colors.border},
+  linkText: {fontSize: font.size.md, color: colors.text, fontWeight: font.weight.medium},
+  linkChevron: {fontSize: font.size.xl, color: colors.textMuted},
   chips: {flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md},
   chip: {flex: 1, backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border},
   chipValue: {fontSize: font.size.lg, fontWeight: font.weight.bold, color: colors.text},

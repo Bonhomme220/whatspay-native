@@ -9,10 +9,15 @@ import {
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useNavigation} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import type {AppStackParamList} from '../navigation/RootNavigator';
 import {colors, font, radius, spacing} from '../theme';
 import {useAuth} from '../context/AuthContext';
 import {DashboardData, fetchDashboard} from '../api/dashboard';
 import {apiErrorMessage} from '../api/client';
+
+type Nav = NativeStackNavigationProp<AppStackParamList>;
 
 function StatCard({label, value, tint}: {label: string; value: string; tint?: string}) {
   return (
@@ -24,7 +29,8 @@ function StatCard({label, value, tint}: {label: string; value: string; tint?: st
 }
 
 export default function DashboardScreen() {
-  const {user, signOut} = useAuth();
+  const navigation = useNavigation<Nav>();
+  const {user} = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -64,8 +70,8 @@ export default function DashboardScreen() {
           <Text style={styles.hello}>Bonjour,</Text>
           <Text style={styles.name}>{user?.firstname ?? 'Diffuseur'} 👋</Text>
         </View>
-        <TouchableOpacity onPress={signOut} style={styles.logoutBtn}>
-          <Text style={styles.logoutText}>Déconnexion</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Notifications')} style={styles.bell} hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+          <Text style={styles.bellIcon}>🔔</Text>
         </TouchableOpacity>
       </View>
 
@@ -131,8 +137,8 @@ const styles = StyleSheet.create({
   },
   hello: {fontSize: font.size.sm, color: colors.textMuted},
   name: {fontSize: font.size.xl, fontWeight: font.weight.bold, color: colors.text},
-  logoutBtn: {paddingVertical: spacing.xs, paddingHorizontal: spacing.md, borderRadius: radius.pill, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border},
-  logoutText: {color: colors.textMuted, fontSize: font.size.xs, fontWeight: font.weight.medium},
+  bell: {width: 42, height: 42, borderRadius: 21, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center'},
+  bellIcon: {fontSize: 18},
   scroll: {padding: spacing.lg, paddingBottom: spacing.xxl},
   errorBox: {backgroundColor: colors.dangerSoft, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md},
   errorText: {color: colors.danger, fontSize: font.size.sm},

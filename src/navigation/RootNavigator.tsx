@@ -7,7 +7,15 @@ import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import MissionDetailScreen from '../screens/MissionDetailScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
+import WithdrawScreen from '../screens/WithdrawScreen';
+import AmbassadorScreen from '../screens/AmbassadorScreen';
+import TicketsScreen from '../screens/TicketsScreen';
+import TicketDetailScreen from '../screens/TicketDetailScreen';
+import NewTicketScreen from '../screens/NewTicketScreen';
 import MainTabs from './MainTabs';
+import PushBootstrap from './PushBootstrap';
+import {navigationRef} from './navigationRef';
 import {colors} from '../theme';
 
 export type AuthStackParamList = {
@@ -19,6 +27,12 @@ export type AuthStackParamList = {
 export type AppStackParamList = {
   Tabs: undefined;
   MissionDetail: {id: string};
+  Notifications: undefined;
+  Withdraw: {balance: number};
+  Ambassador: undefined;
+  Tickets: undefined;
+  TicketDetail: {id: string};
+  NewTicket: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -36,10 +50,19 @@ function AuthNavigator() {
 
 function AppNavigator() {
   return (
-    <AppStack.Navigator screenOptions={{headerShown: false, contentStyle: {backgroundColor: colors.bg}}}>
-      <AppStack.Screen name="Tabs" component={MainTabs} />
-      <AppStack.Screen name="MissionDetail" component={MissionDetailScreen} />
-    </AppStack.Navigator>
+    <>
+      <PushBootstrap />
+      <AppStack.Navigator screenOptions={{headerShown: false, contentStyle: {backgroundColor: colors.bg}}}>
+        <AppStack.Screen name="Tabs" component={MainTabs} />
+        <AppStack.Screen name="MissionDetail" component={MissionDetailScreen} />
+        <AppStack.Screen name="Notifications" component={NotificationsScreen} />
+        <AppStack.Screen name="Withdraw" component={WithdrawScreen} />
+        <AppStack.Screen name="Ambassador" component={AmbassadorScreen} />
+        <AppStack.Screen name="Tickets" component={TicketsScreen} />
+        <AppStack.Screen name="TicketDetail" component={TicketDetailScreen} />
+        <AppStack.Screen name="NewTicket" component={NewTicketScreen} />
+      </AppStack.Navigator>
+    </>
   );
 }
 
@@ -51,7 +74,7 @@ export default function RootNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       {token ? <AppNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );

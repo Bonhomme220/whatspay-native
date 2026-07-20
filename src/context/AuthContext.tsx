@@ -12,6 +12,8 @@ interface AuthState {
   user: AuthUser | null;
   profil: Profil;
   signIn: (email: string, password: string) => Promise<void>;
+  /** Applique une session déjà obtenue (ex : auto-login après inscription). */
+  applyAuth: (token: string, user: AuthUser, profil: Exclude<Profil, null>) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -64,17 +66,27 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
     return () => setUnauthorizedHandler(null);
   }, [clearLocal]);
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const res: LoginResult = await apiLogin(email.trim(), password);
-    await Promise.all([
-      AsyncStorage.setItem(STORAGE_KEYS.token, res.token),
-      AsyncStorage.setItem(STORAGE_KEYS.user, JSON.stringify(res.user)),
-      AsyncStorage.setItem(STORAGE_KEYS.profil, res.profil),
-    ]);
-    setToken(res.token);
-    setUser(res.user);
-    setProfil(res.profil);
-  }, []);
+  const applyAuth = useCallback(
+    async (t: string, u: AuthUser, p: Exclude<Profil, null>) => {
+      await Promise.all([
+        AsyncStorage.setItem(STORAGE_KEYS.token, t),
+        AsyncStorage.setItem(STORAGE_KEYS.user, JSON.stringify(u)),
+        AsyncStorage.setItem(STORAGE_KEYS.profil, p),
+      ]);
+      setToken(t);
+      setUser(u);
+      setProfil(p);
+    },
+    [],
+  );
+
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      const res: LoginResult = await apiLogin(email.trim(), password);
+      await applyAuth(res.token, res.user, res.profil);
+    },
+    [applyAuth],
+  );
 
   const signOut = useCallback(async () => {
     await apiLogout();
@@ -82,8 +94,8 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
   }, [clearLocal]);
 
   const value = useMemo<AuthState>(
-    () => ({ready, token, user, profil, signIn, signOut}),
-    [ready, token, user, profil, signIn, signOut],
+    () => ({ready, token, user, profil, signIn, applyAuth, signOut}),
+    [ready, token, user, profil, signIn, applyAuth, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
