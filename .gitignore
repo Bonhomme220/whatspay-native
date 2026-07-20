@@ -2,6 +2,10 @@
 #
 .DS_Store
 
+# Firebase config (ne pas publier sur un repo public)
+android/app/google-services.json
+ios/GoogleService-Info.plist
+
 # Xcode
 #
 build/
