@@ -170,6 +170,14 @@ export default function MissionDetailScreen({route, navigation}: Props) {
           </View>
         )}
 
+        {submitted && (!!mission.reason_title || !!mission.reason_description) && (
+          <View style={[styles.resultCard, mission.status === 'SUBMISSION_REJECTED' ? styles.resultReject : styles.resultOk]}>
+            <Text style={styles.resultLabel}>Résultat de la vérification</Text>
+            {!!mission.reason_title && <Text style={styles.resultTitle}>{mission.reason_title}</Text>}
+            {!!mission.reason_description && <Text style={styles.resultDesc}>{mission.reason_description}</Text>}
+          </View>
+        )}
+
         {!!task?.description && (
           <Section title="Description">
             <Text style={styles.body}>{task.description}</Text>
@@ -290,4 +298,10 @@ const styles = StyleSheet.create({
   errorText: {color: colors.danger, fontSize: font.size.md, textAlign: 'center'},
   complaintBtn: {marginTop: spacing.xl, padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, alignItems: 'center'},
   complaintText: {fontSize: font.size.sm, color: colors.textMuted, fontWeight: font.weight.medium},
+  resultCard: {borderRadius: radius.lg, padding: spacing.lg, marginTop: spacing.md, borderWidth: 1},
+  resultOk: {backgroundColor: colors.primarySoft, borderColor: '#bbf7d0'},
+  resultReject: {backgroundColor: colors.dangerSoft, borderColor: '#fecaca'},
+  resultLabel: {fontSize: font.size.xs, color: colors.textMuted, fontWeight: font.weight.medium, marginBottom: 2},
+  resultTitle: {fontSize: font.size.md, fontWeight: font.weight.bold, color: colors.text},
+  resultDesc: {fontSize: font.size.sm, color: colors.textMuted, marginTop: spacing.xs, lineHeight: 20},
 });

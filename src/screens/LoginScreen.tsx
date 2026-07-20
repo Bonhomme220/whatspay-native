@@ -43,6 +43,11 @@ export default function LoginScreen({navigation}: Props) {
       if (data?.kyc_required && data?.verify_url) {
         setKycUrl(data.verify_url);
       }
+      if (data?.inactive) {
+        // Compte désactivé → proposer la réactivation
+        navigation.navigate('Reactivation', {email: email.trim()});
+        return;
+      }
       setError(apiErrorMessage(e, 'Connexion impossible.'));
     } finally {
       setLoading(false);

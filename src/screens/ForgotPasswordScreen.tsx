@@ -3,7 +3,8 @@ import {ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Button, TextField} from '../components/ui';
 import {colors, font, spacing} from '../theme';
-import {api, apiErrorMessage} from '../api/client';
+import {apiErrorMessage} from '../api/client';
+import {forgotPassword} from '../api/auth';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {AuthStackParamList} from '../navigation/RootNavigator';
 
@@ -24,8 +25,10 @@ export default function ForgotPasswordScreen({navigation}: Props) {
     }
     setLoading(true);
     try {
-      const {data} = await api.post('/auth/forgot-password', {email: email.trim()});
-      setMessage(data?.message ?? 'Si un compte existe, un email de réinitialisation a été envoyé.');
+      const data = await forgotPassword(email.trim());
+      setMessage(data?.message ?? 'Un code de réinitialisation a été envoyé par email.');
+      // Enchaîne vers la saisie du code + nouveau mot de passe.
+      navigation.navigate('ResetPassword', {email: email.trim()});
     } catch (e) {
       setError(apiErrorMessage(e, 'Envoi impossible.'));
     } finally {
@@ -59,7 +62,10 @@ export default function ForgotPasswordScreen({navigation}: Props) {
           </View>
         )}
 
-        <Button title="Envoyer" onPress={submit} loading={loading} style={{marginTop: spacing.sm}} />
+        <Button title="Envoyer le code" onPress={submit} loading={loading} style={{marginTop: spacing.sm}} />
+        <TouchableOpacity style={styles.back} onPress={() => navigation.navigate('ResetPassword', {email: email.trim()})}>
+          <Text style={styles.backText}>J'ai déjà un code ›</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.back} onPress={() => navigation.goBack()}>
           <Text style={styles.backText}>‹ Retour à la connexion</Text>
         </TouchableOpacity>

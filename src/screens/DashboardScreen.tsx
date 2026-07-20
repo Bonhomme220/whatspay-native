@@ -20,6 +20,7 @@ import NudgeBanners from '../components/NudgeBanners';
 import NudgeModalView from '../components/NudgeModalView';
 import KycBanner from '../components/KycBanner';
 import WhatsAppChannelBanner from '../components/WhatsAppChannelBanner';
+import OnboardingModal from '../components/OnboardingModal';
 import {acknowledgeIncident, fetchNudges, Nudge, NudgeCta} from '../api/nudges';
 
 type Nav = NativeStackNavigationProp<AppStackParamList>;
@@ -180,6 +181,7 @@ export default function DashboardScreen() {
       )}
 
       <NudgeModalView nudge={modal} onClose={closeModal} onCta={onCta} />
+      <OnboardingModal />
     </SafeAreaView>
   );
 }

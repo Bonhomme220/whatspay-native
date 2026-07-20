@@ -63,6 +63,28 @@ export async function logout(): Promise<void> {
   }
 }
 
+/** POST /auth/forgot-password — envoie un code de réinitialisation par email. */
+export async function forgotPassword(email: string): Promise<{message?: string}> {
+  const {data} = await api.post('/auth/forgot-password', {email});
+  return data;
+}
+
+/** POST /auth/reset-password — réinitialise via email + code reçu. */
+export async function resetPassword(
+  email: string,
+  code: string,
+  password: string,
+  password_confirmation: string,
+): Promise<{message?: string}> {
+  const {data} = await api.post('/auth/reset-password', {
+    email,
+    code,
+    password,
+    password_confirmation,
+  });
+  return data;
+}
+
 /** POST /fcm-token — enregistre le token FCM du device pour les push. */
 export async function registerFcmToken(token: string): Promise<void> {
   await api.post('/fcm-token', {fcm_token: token});

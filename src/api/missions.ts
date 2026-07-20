@@ -31,6 +31,8 @@ export interface Mission {
   task?: MissionTask;
   complaint?: any;
   tracking_stats?: TrackingStats | null;
+  reason_title?: string | null;
+  reason_description?: string | null;
 }
 
 export interface TrackingStats {

@@ -59,3 +59,8 @@ export async function requestDeletion(reason: string): Promise<{success: boolean
   const {data} = await api.post('/profile/delete-account', {reason});
   return data;
 }
+
+/** POST /onboarding/complete — marque l'onboarding comme vu. */
+export async function completeOnboarding(): Promise<void> {
+  await api.post('/onboarding/complete');
+}

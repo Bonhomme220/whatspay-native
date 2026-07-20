@@ -7,6 +7,8 @@ import SplashScreen from '../screens/SplashScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
+import ResetPasswordScreen from '../screens/ResetPasswordScreen';
+import ReactivationScreen from '../screens/ReactivationScreen';
 import MissionDetailScreen from '../screens/MissionDetailScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import WithdrawScreen from '../screens/WithdrawScreen';
@@ -27,6 +29,8 @@ export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
+  ResetPassword: {email?: string} | undefined;
+  Reactivation: {email?: string} | undefined;
 };
 
 export type AppStackParamList = {
@@ -53,6 +57,8 @@ function AuthNavigator() {
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="Register" component={RegisterScreen} />
       <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <AuthStack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+      <AuthStack.Screen name="Reactivation" component={ReactivationScreen} />
     </AuthStack.Navigator>
   );
 }
