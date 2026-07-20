@@ -16,6 +16,9 @@ import {colors, font, radius, spacing} from '../theme';
 import {useAuth} from '../context/AuthContext';
 import {DashboardData, fetchDashboard} from '../api/dashboard';
 import {apiErrorMessage} from '../api/client';
+import NudgeBanners from '../components/NudgeBanners';
+import NudgeModalView from '../components/NudgeModalView';
+import {acknowledgeIncident, fetchNudges, Nudge, NudgeCta} from '../api/nudges';
 
 type Nav = NativeStackNavigationProp<AppStackParamList>;
 
@@ -36,11 +39,55 @@ export default function DashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Nudges (bannières + modal contextuels, pilotés serveur)
+  const [banners, setBanners] = useState<Nudge[]>([]);
+  const [modal, setModal] = useState<Nudge | null>(null);
+  const [dismissed, setDismissed] = useState<string[]>([]);
+
+  const onCta = useCallback(
+    (cta: NudgeCta) => {
+      switch (cta.screen) {
+        case 'missions':
+          navigation.navigate('Tabs', {screen: 'Missions'});
+          break;
+        case 'wallet':
+          navigation.navigate('Tabs', {screen: 'Gains'});
+          break;
+        case 'mission_detail':
+          if (cta.params?.id) navigation.navigate('MissionDetail', {id: String(cta.params.id)});
+          break;
+        case 'ambassador':
+          navigation.navigate('Ambassador');
+          break;
+        case 'faq':
+          navigation.navigate('Faq');
+          break;
+        case 'complaints':
+          navigation.navigate('Complaints');
+          break;
+      }
+    },
+    [navigation],
+  );
+
+  const closeModal = useCallback(() => {
+    const m = modal;
+    setModal(null);
+    if (m && m.id?.toLowerCase().includes('incident')) {
+      acknowledgeIncident().catch(() => {});
+    }
+  }, [modal]);
+
   const load = useCallback(async () => {
     setError(null);
     try {
-      const d = await fetchDashboard();
+      const [d, n] = await Promise.all([
+        fetchDashboard(),
+        fetchNudges().catch(() => ({modal: null, banners: [] as Nudge[]})),
+      ]);
       setData(d);
+      setBanners(n.banners);
+      setModal(n.modal);
     } catch (e) {
       setError(apiErrorMessage(e, 'Impossible de charger le tableau de bord.'));
     } finally {
@@ -83,6 +130,11 @@ export default function DashboardScreen() {
         <ScrollView
           contentContainerStyle={styles.scroll}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}>
+          <NudgeBanners
+            banners={banners.filter(b => !dismissed.includes(b.id))}
+            onDismiss={id => setDismissed(prev => [...prev, id])}
+            onCta={onCta}
+          />
           {!!error && (
             <View style={styles.errorBox}>
               <Text style={styles.errorText}>{error}</Text>
@@ -121,6 +173,8 @@ export default function DashboardScreen() {
           )}
         </ScrollView>
       )}
+
+      <NudgeModalView nudge={modal} onClose={closeModal} onCta={onCta} />
     </SafeAreaView>
   );
 }
