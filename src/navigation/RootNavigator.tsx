@@ -6,7 +6,8 @@ import SplashScreen from '../screens/SplashScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
-import DashboardScreen from '../screens/DashboardScreen';
+import MissionDetailScreen from '../screens/MissionDetailScreen';
+import MainTabs from './MainTabs';
 import {colors} from '../theme';
 
 export type AuthStackParamList = {
@@ -16,7 +17,8 @@ export type AuthStackParamList = {
 };
 
 export type AppStackParamList = {
-  Dashboard: undefined;
+  Tabs: undefined;
+  MissionDetail: {id: string};
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -35,7 +37,8 @@ function AuthNavigator() {
 function AppNavigator() {
   return (
     <AppStack.Navigator screenOptions={{headerShown: false, contentStyle: {backgroundColor: colors.bg}}}>
-      <AppStack.Screen name="Dashboard" component={DashboardScreen} />
+      <AppStack.Screen name="Tabs" component={MainTabs} />
+      <AppStack.Screen name="MissionDetail" component={MissionDetailScreen} />
     </AppStack.Navigator>
   );
 }
