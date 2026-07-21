@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Modal, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Image, Modal, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {colors, font, radius, spacing} from '../theme';
 import {completeOnboarding, fetchProfile} from '../api/profile';
 
@@ -30,10 +30,8 @@ export default function OnboardingModal() {
     <Modal visible={visible} transparent animationType="fade" onRequestClose={finish}>
       <View style={styles.backdrop}>
         <View style={styles.card}>
-          <View style={styles.logo}>
-            <Text style={styles.logoText}>W</Text>
-          </View>
-          <Text style={styles.welcome}>Bienvenue sur WhatsPAY 👋</Text>
+          <Image source={require('../assets/logo.png')} style={styles.logo} resizeMode="contain" />
+          <Text style={styles.welcome}>Bienvenue 👋</Text>
           <Text style={styles.sub}>Monétise tes Status WhatsApp en 3 étapes :</Text>
 
           <View style={styles.steps}>
@@ -60,8 +58,7 @@ export default function OnboardingModal() {
 const styles = StyleSheet.create({
   backdrop: {flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: spacing.xl},
   card: {backgroundColor: colors.card, borderRadius: radius.xl, padding: spacing.xl},
-  logo: {width: 56, height: 56, borderRadius: 16, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: spacing.md},
-  logoText: {color: colors.textOnPrimary, fontSize: 28, fontWeight: font.weight.bold},
+  logo: {width: 180, height: 60, alignSelf: 'center', marginBottom: spacing.md},
   welcome: {fontSize: font.size.lg, fontWeight: font.weight.bold, color: colors.text, textAlign: 'center'},
   sub: {fontSize: font.size.sm, color: colors.textMuted, textAlign: 'center', marginTop: spacing.xs, marginBottom: spacing.lg},
   steps: {gap: spacing.md, marginBottom: spacing.lg},

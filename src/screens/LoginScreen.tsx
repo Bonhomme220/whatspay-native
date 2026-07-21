@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import {
+  Image,
   KeyboardAvoidingView,
   Linking,
   Platform,
@@ -61,10 +62,7 @@ export default function LoginScreen({navigation}: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
-            <View style={styles.logo}>
-              <Text style={styles.logoText}>W</Text>
-            </View>
-            <Text style={styles.brand}>WhatsPAY</Text>
+            <Image source={require('../assets/logo.png')} style={styles.logo} resizeMode="contain" />
             <Text style={styles.subtitle}>Monétise tes Status WhatsApp</Text>
           </View>
 
@@ -124,17 +122,7 @@ const styles = StyleSheet.create({
   safe: {flex: 1, backgroundColor: colors.bg},
   scroll: {flexGrow: 1, justifyContent: 'center', padding: spacing.xl},
   header: {alignItems: 'center', marginBottom: spacing.xl},
-  logo: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  logoText: {color: colors.textOnPrimary, fontSize: 34, fontWeight: font.weight.bold},
-  brand: {fontSize: font.size.xxl, fontWeight: font.weight.bold, color: colors.text},
+  logo: {width: 220, height: 74, marginBottom: spacing.sm},
   subtitle: {fontSize: font.size.sm, color: colors.textMuted, marginTop: spacing.xs},
   card: {
     backgroundColor: colors.card,
