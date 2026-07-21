@@ -8,6 +8,7 @@ export const colors = {
   bg: '#f7f8fa',
   card: '#ffffff',
   border: '#e5e7eb',
+  inputBg: 'rgba(43,94,94,0.1)', // fond des champs (charte PWA)
 
   text: '#111827',
   textMuted: '#6b7280',

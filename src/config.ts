@@ -2,7 +2,7 @@
  * Configuration globale de l'app.
  *
  * API_BASE_URL : racine de l'API Laravel (Sanctum).
- *  - Prod : https://app.whatspay.africa/api
+ *  - Prod : https://whatspay.africa/api
  *  - Émulateur Android vers un backend local : http://10.0.2.2:8000/api
  *  - Appareil physique vers un PC local : http://<IP_DU_PC>:8000/api
  */

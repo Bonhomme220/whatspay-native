@@ -81,7 +81,7 @@ export default function AmbassadorScreen({navigation}: Props) {
     if (!data?.ambassador_code) return;
     try {
       await Share.share({
-        message: `Rejoins WhatsPAY avec mon code ambassadeur ${data.ambassador_code} et monétise tes Status WhatsApp ! https://app.whatspay.africa`,
+        message: `Rejoins WhatsPAY avec mon code ambassadeur ${data.ambassador_code} et monétise tes Status WhatsApp ! https://whatspay.africa`,
       });
     } catch {}
   };

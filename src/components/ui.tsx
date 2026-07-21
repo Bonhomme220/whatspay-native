@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     fontSize: font.size.md,
     color: colors.text,
-    backgroundColor: colors.card,
+    backgroundColor: colors.inputBg,
   },
   errorText: {color: colors.danger, fontSize: font.size.xs, marginTop: spacing.xs},
 });

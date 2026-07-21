@@ -133,7 +133,7 @@ export function MultiSelect({
 
 const styles = StyleSheet.create({
   label: {fontSize: font.size.sm, color: colors.textMuted, marginBottom: spacing.xs, fontWeight: font.weight.medium},
-  field: {height: 50, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: spacing.md, backgroundColor: colors.card, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'},
+  field: {height: 50, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: spacing.md, backgroundColor: colors.inputBg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'},
   fieldText: {fontSize: font.size.md, color: colors.text, flex: 1},
   chevron: {color: colors.textMuted, fontSize: font.size.md, marginLeft: spacing.sm},
   modal: {flex: 1, backgroundColor: colors.bg, paddingTop: spacing.xxl},

@@ -120,7 +120,7 @@ export function DateField({
 
 const styles = StyleSheet.create({
   label: {fontSize: font.size.sm, color: colors.textMuted, marginBottom: spacing.xs, fontWeight: font.weight.medium},
-  field: {height: 50, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: spacing.md, backgroundColor: colors.card, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'},
+  field: {height: 50, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: spacing.md, backgroundColor: colors.inputBg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'},
   fieldText: {fontSize: font.size.md, color: colors.text, flex: 1},
   icon: {fontSize: font.size.md, marginLeft: spacing.sm},
   iosBackdrop: {flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.35)'},
