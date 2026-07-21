@@ -25,7 +25,7 @@ messaging().setBackgroundMessageHandler(async remoteMessage => {
     title: data.title ?? 'WhatsPAY',
     body: data.body ?? '',
     data,
-    android: { channelId: 'whatspay-default', smallIcon: 'ic_launcher', pressAction: { id: 'default' } },
+    android: { channelId: 'whatspay-default', smallIcon: 'ic_notification', color: '#1BA24B', pressAction: { id: 'default' } },
   });
 });
 

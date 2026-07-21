@@ -46,7 +46,8 @@ export async function displayNotification(
     data: data ?? {},
     android: {
       channelId: CHANNEL_ID,
-      smallIcon: 'ic_launcher',
+      smallIcon: 'ic_notification',
+      color: '#1BA24B',
       pressAction: {id: 'default'},
     },
   });
