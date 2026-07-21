@@ -8,120 +8,113 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useFocusEffect} from '@react-navigation/native';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {AppStackParamList} from '../navigation/RootNavigator';
-import {colors, font, radius, spacing} from '../theme';
 import {Complaint, fetchComplaints} from '../api/complaints';
-import {apiErrorMessage} from '../api/client';
+import Icon from '../components/Icon';
+import {font} from '../theme';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Complaints'>;
+const GREEN = '#16a34a';
 
-function statusMeta(status: string): {label: string; color: string; bg: string} {
-  const s = status?.toLowerCase();
-  if (s === 'resolved' || s === 'resolu' || s === 'résolu') return {label: 'Résolue', color: colors.primaryDark, bg: colors.primarySoft};
-  if (s === 'rejected' || s === 'rejete') return {label: 'Rejetée', color: colors.danger, bg: colors.dangerSoft};
-  return {label: 'En cours', color: colors.warning, bg: colors.warningSoft};
+const STATUS: Record<string, {label: string; bg: string; fg: string}> = {
+  pending: {label: 'En cours', bg: '#fffbeb', fg: '#b45309'},
+  accepted: {label: 'Acceptée', bg: '#dcfce7', fg: '#15803d'},
+  resolved: {label: 'Résolue', bg: '#dcfce7', fg: '#15803d'},
+  rejected: {label: 'Rejetée', bg: '#fee2e2', fg: '#b91c1c'},
+};
+function meta(s: string) {
+  return STATUS[(s ?? '').toLowerCase()] ?? {label: s, bg: '#f3f4f6', fg: '#4b5563'};
+}
+function fmtDate(d?: string) {
+  if (!d) return '';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '' : dt.toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit', year: 'numeric'});
 }
 
 export default function ComplaintsScreen({navigation}: Props) {
   const [items, setItems] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setError(null);
     try {
       setItems(await fetchComplaints());
-    } catch (e) {
-      setError(apiErrorMessage(e, 'Impossible de charger les réclamations.'));
+    } catch {
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load]),
-  );
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-          <Text style={styles.back}>‹ Retour</Text>
+    <View style={styles.screen}>
+      <View style={styles.hero}>
+        <TouchableOpacity style={styles.back} onPress={() => navigation.goBack()}>
+          <Icon name="chevron-back" size={16} color="#dcfce7" /><Text style={styles.backText}>Retour</Text>
         </TouchableOpacity>
+        <Text style={styles.heroTitle}>Mes Réclamations</Text>
+        <Text style={styles.heroSub}>Suivez vos réclamations sur les missions</Text>
       </View>
-      <Text style={styles.title}>Mes réclamations</Text>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.primary} size="large" />
-        </View>
+        <View style={styles.loader}><ActivityIndicator color={GREEN} size="large" /></View>
       ) : (
         <FlatList
           data={items}
           keyExtractor={c => c.id}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => {
-                setRefreshing(true);
-                load();
-              }}
-              tintColor={colors.primary}
-            />
-          }
+          contentContainerStyle={styles.body}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => {setRefreshing(true); load();}} tintColor={GREEN} />}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Text style={styles.emptyText}>{error ?? 'Aucune réclamation.'}</Text>
+              <View style={styles.emptyIcon}><Icon name="flag-outline" size={30} color="#9ca3af" /></View>
+              <Text style={styles.emptyText}>Aucune réclamation.</Text>
             </View>
           }
           renderItem={({item}) => {
-            const meta = statusMeta(item.status);
+            const m = meta(item.status);
             return (
-              <View style={styles.row}>
-                <View style={styles.rowTop}>
+              <View style={styles.card}>
+                <View style={styles.cardTop}>
                   <Text style={styles.task} numberOfLines={1}>{item.task_name ?? 'Mission'}</Text>
-                  <View style={[styles.badge, {backgroundColor: meta.bg}]}>
-                    <Text style={[styles.badgeText, {color: meta.color}]}>{meta.label}</Text>
-                  </View>
+                  <View style={[styles.pill, {backgroundColor: m.bg}]}><Text style={[styles.pillText, {color: m.fg}]}>{m.label}</Text></View>
                 </View>
+                <Text style={styles.date}>{fmtDate(item.created_at)}</Text>
                 <Text style={styles.message}>{item.message}</Text>
                 {!!item.admin_note && (
-                  <View style={styles.note}>
-                    <Text style={styles.noteText}>Réponse : {item.admin_note}</Text>
-                  </View>
+                  <View style={styles.note}><Text style={styles.noteText}>Réponse : {item.admin_note}</Text></View>
                 )}
               </View>
             );
           }}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: colors.bg},
-  center: {flex: 1, alignItems: 'center', justifyContent: 'center'},
-  header: {paddingHorizontal: spacing.lg, paddingVertical: spacing.sm},
-  back: {color: colors.primary, fontSize: font.size.md, fontWeight: font.weight.bold},
-  title: {fontSize: font.size.xl, fontWeight: font.weight.bold, color: colors.text, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm},
-  listContent: {paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl},
-  row: {backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border},
-  rowTop: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xs},
-  task: {flex: 1, fontSize: font.size.md, fontWeight: font.weight.bold, color: colors.text, marginRight: spacing.sm},
-  message: {fontSize: font.size.sm, color: colors.text, lineHeight: 20},
-  note: {backgroundColor: colors.bg, borderRadius: radius.sm, padding: spacing.sm, marginTop: spacing.sm},
-  noteText: {fontSize: font.size.sm, color: colors.textMuted},
-  badge: {borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 3},
-  badgeText: {fontSize: font.size.xs, fontWeight: font.weight.bold},
-  empty: {alignItems: 'center', padding: spacing.xxl},
-  emptyText: {color: colors.textMuted, fontSize: font.size.sm, textAlign: 'center'},
+  screen: {flex: 1, backgroundColor: '#f9fafb'},
+  loader: {flex: 1, alignItems: 'center', justifyContent: 'center'},
+  hero: {backgroundColor: GREEN, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40},
+  back: {flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 12},
+  backText: {color: '#dcfce7', fontSize: font.size.sm},
+  heroTitle: {color: '#fff', fontSize: 24, fontWeight: font.weight.bold},
+  heroSub: {color: '#dcfce7', fontSize: font.size.sm, marginTop: 2},
+  body: {padding: 16, marginTop: -24},
+  card: {backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 1},
+  cardTop: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8},
+  task: {flex: 1, color: '#1f2937', fontSize: font.size.sm, fontWeight: font.weight.bold},
+  date: {color: '#9ca3af', fontSize: 10, marginTop: 2},
+  message: {color: '#374151', fontSize: font.size.sm, marginTop: 8, lineHeight: 20},
+  note: {backgroundColor: '#f9fafb', borderRadius: 10, padding: 10, marginTop: 10},
+  noteText: {color: '#6b7280', fontSize: font.size.xs},
+  pill: {borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3},
+  pillText: {fontSize: 10, fontWeight: font.weight.bold},
+  empty: {alignItems: 'center', paddingVertical: 60},
+  emptyIcon: {width: 64, height: 64, borderRadius: 32, backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center', marginBottom: 12},
+  emptyText: {color: '#6b7280', fontSize: font.size.sm},
 });

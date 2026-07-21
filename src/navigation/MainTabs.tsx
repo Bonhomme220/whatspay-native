@@ -1,15 +1,16 @@
 import React from 'react';
-import {Text} from 'react-native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import DashboardScreen from '../screens/DashboardScreen';
 import MissionsScreen from '../screens/MissionsScreen';
 import GainsScreen from '../screens/GainsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import AppHeader from '../components/AppHeader';
+import Icon from '../components/Icon';
 import {colors, font} from '../theme';
 
 export type TabParamList = {
   Accueil: undefined;
-  Missions: undefined;
+  Campagnes: undefined;
   Gains: undefined;
   Profil: undefined;
 };
@@ -17,33 +18,33 @@ export type TabParamList = {
 const Tab = createBottomTabNavigator<TabParamList>();
 
 const ICONS: Record<keyof TabParamList, string> = {
-  Accueil: '🏠',
-  Missions: '🎯',
-  Gains: '💰',
-  Profil: '👤',
+  Accueil: 'home',
+  Campagnes: 'megaphone',
+  Gains: 'wallet',
+  Profil: 'person',
 };
 
 export default function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={({route}) => ({
-        headerShown: false,
+        header: () => <AppHeader />,
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
+        tabBarInactiveTintColor: '#9ca3af',
         tabBarStyle: {
-          backgroundColor: colors.card,
-          borderTopColor: colors.border,
+          backgroundColor: '#fff',
+          borderTopColor: '#f3f4f6',
           height: 60,
           paddingBottom: 8,
           paddingTop: 6,
         },
-        tabBarLabelStyle: {fontSize: font.size.xs, fontWeight: font.weight.medium},
-        tabBarIcon: ({focused}) => (
-          <Text style={{fontSize: 20, opacity: focused ? 1 : 0.6}}>{ICONS[route.name]}</Text>
+        tabBarLabelStyle: {fontSize: 10, fontWeight: font.weight.medium},
+        tabBarIcon: ({focused, color}) => (
+          <Icon name={focused ? ICONS[route.name] : `${ICONS[route.name]}-outline`} size={22} color={color} />
         ),
       })}>
       <Tab.Screen name="Accueil" component={DashboardScreen} />
-      <Tab.Screen name="Missions" component={MissionsScreen} />
+      <Tab.Screen name="Campagnes" component={MissionsScreen} />
       <Tab.Screen name="Gains" component={GainsScreen} />
       <Tab.Screen name="Profil" component={ProfileScreen} />
     </Tab.Navigator>

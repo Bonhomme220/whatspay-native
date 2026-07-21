@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -10,137 +10,121 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {useFocusEffect} from '@react-navigation/native';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {AppStackParamList} from '../navigation/RootNavigator';
-import {colors, font, radius, spacing} from '../theme';
-import {fetchTicket, replyTicket, TicketDetail, TicketMessage} from '../api/tickets';
-import {apiErrorMessage} from '../api/client';
+import {fetchTicket, replyTicket, TicketDetail} from '../api/tickets';
+import Icon from '../components/Icon';
+import {font} from '../theme';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'TicketDetail'>;
+const GREEN = '#16a34a';
 
-function Bubble({m}: {m: TicketMessage}) {
-  const mine = !m.is_admin && !m.is_ai;
-  const author = m.is_ai ? 'Assistant' : m.is_admin ? 'Support' : null;
-  return (
-    <View style={[styles.bubbleRow, mine && {alignItems: 'flex-end'}]}>
-      {!!author && <Text style={styles.author}>{author}</Text>}
-      <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}>
-        <Text style={[styles.bubbleText, mine && {color: colors.textOnPrimary}]}>{m.message}</Text>
-      </View>
-    </View>
-  );
+function fmtTime(d?: string) {
+  if (!d) return '';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '' : dt.toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'});
 }
 
 export default function TicketDetailScreen({route, navigation}: Props) {
   const {id} = route.params;
   const [ticket, setTicket] = useState<TicketDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [text, setText] = useState('');
+  const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
 
   const load = useCallback(async () => {
     try {
       setTicket(await fetchTicket(id));
     } catch {
-      // ignore
     } finally {
       setLoading(false);
     }
   }, [id]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const send = async () => {
-    const msg = text.trim();
-    if (!msg) return;
+    if (!reply.trim()) return;
     setSending(true);
     try {
-      await replyTicket(id, msg);
-      setText('');
+      await replyTicket(id, reply.trim());
+      setReply('');
       await load();
-    } catch (e) {
-      // afficher l'erreur en tête ? On garde simple.
-      apiErrorMessage(e);
+    } catch {
     } finally {
       setSending(false);
     }
   };
 
-  const closed = ticket?.status?.toLowerCase() === 'closed' || ticket?.status?.toLowerCase() === 'fermé';
+  if (loading || !ticket) {
+    return <View style={styles.loader}><ActivityIndicator color={GREEN} size="large" /></View>;
+  }
+  const isClosed = ticket.status === 'closed';
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-          <Text style={styles.back}>‹ Retour</Text>
+    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      {/* Hero */}
+      <View style={styles.hero}>
+        <TouchableOpacity style={styles.backRow} onPress={() => navigation.goBack()}>
+          <Icon name="chevron-back" size={20} color="#fff" />
+          <Text style={styles.subject} numberOfLines={2}>{ticket.subject}</Text>
         </TouchableOpacity>
+        <View style={[styles.pill, {backgroundColor: isClosed ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.25)'}]}>
+          <Text style={styles.pillText}>{isClosed ? 'Fermé' : 'Ouvert'}</Text>
+        </View>
       </View>
 
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.primary} size="large" />
-        </View>
-      ) : (
-        <KeyboardAvoidingView
-          style={{flex: 1}}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={80}>
-          <Text style={styles.subject}>{ticket?.subject}</Text>
-          <ScrollView contentContainerStyle={styles.thread}>
-            {(ticket?.messages ?? []).map(m => (
-              <Bubble key={m.id} m={m} />
-            ))}
-          </ScrollView>
+      {/* Messages */}
+      <ScrollView style={{flex: 1}} contentContainerStyle={styles.messages}>
+        {ticket.messages.map(m => {
+          const fromSupport = m.is_admin || m.is_ai;
+          return (
+            <View key={m.id} style={[styles.bubbleRow, {justifyContent: fromSupport ? 'flex-start' : 'flex-end'}]}>
+              <View style={[styles.bubble, fromSupport ? styles.bubbleSupport : styles.bubbleUser]}>
+                {fromSupport && <Text style={styles.sender}>{m.is_ai ? 'Assistant' : 'Support'}</Text>}
+                <Text style={[styles.msgText, {color: fromSupport ? '#374151' : '#fff'}]}>{m.message}</Text>
+                <Text style={[styles.msgTime, {color: fromSupport ? '#9ca3af' : 'rgba(255,255,255,0.7)'}]}>{fmtTime(m.created_at)}</Text>
+              </View>
+            </View>
+          );
+        })}
+      </ScrollView>
 
-          {closed ? (
-            <View style={styles.closedBar}>
-              <Text style={styles.closedText}>Ce ticket est fermé.</Text>
-            </View>
-          ) : (
-            <View style={styles.inputBar}>
-              <TextInput
-                style={styles.input}
-                value={text}
-                onChangeText={setText}
-                placeholder="Écris ta réponse…"
-                placeholderTextColor={colors.textMuted}
-                multiline
-              />
-              <TouchableOpacity style={styles.sendBtn} onPress={send} disabled={sending}>
-                {sending ? (
-                  <ActivityIndicator color={colors.textOnPrimary} />
-                ) : (
-                  <Text style={styles.sendText}>›</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
-        </KeyboardAvoidingView>
+      {/* Reply bar */}
+      {isClosed ? (
+        <View style={styles.closedBar}><Text style={styles.closedText}>Ce ticket est fermé.</Text></View>
+      ) : (
+        <View style={styles.replyBar}>
+          <TextInput style={styles.replyInput} value={reply} onChangeText={setReply} placeholder="Votre message…" placeholderTextColor="#9ca3af" />
+          <TouchableOpacity style={[styles.sendBtn, (!reply.trim() || sending) && {opacity: 0.5}]} onPress={send} disabled={!reply.trim() || sending}>
+            {sending ? <ActivityIndicator color="#fff" size="small" /> : <Icon name="send" size={18} color="#fff" />}
+          </TouchableOpacity>
+        </View>
       )}
-    </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: colors.bg},
-  center: {flex: 1, alignItems: 'center', justifyContent: 'center'},
-  header: {paddingHorizontal: spacing.lg, paddingVertical: spacing.sm},
-  back: {color: colors.primary, fontSize: font.size.md, fontWeight: font.weight.bold},
-  subject: {fontSize: font.size.lg, fontWeight: font.weight.bold, color: colors.text, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm},
-  thread: {padding: spacing.lg, paddingBottom: spacing.xl},
-  bubbleRow: {marginBottom: spacing.md},
-  author: {fontSize: font.size.xs, color: colors.textMuted, marginBottom: 2, marginLeft: spacing.xs},
-  bubble: {maxWidth: '82%', padding: spacing.md, borderRadius: radius.lg},
-  bubbleMine: {backgroundColor: colors.primary, borderBottomRightRadius: 4, alignSelf: 'flex-end'},
-  bubbleOther: {backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 4, alignSelf: 'flex-start'},
-  bubbleText: {fontSize: font.size.md, color: colors.text, lineHeight: 21},
-  inputBar: {flexDirection: 'row', alignItems: 'flex-end', padding: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.card},
-  input: {flex: 1, maxHeight: 120, minHeight: 44, borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingTop: spacing.sm, fontSize: font.size.md, color: colors.text, backgroundColor: colors.bg},
-  sendBtn: {width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginLeft: spacing.sm},
-  sendText: {color: colors.textOnPrimary, fontSize: 26, fontWeight: font.weight.bold, marginTop: -4},
-  closedBar: {padding: spacing.lg, alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border},
-  closedText: {color: colors.textMuted, fontSize: font.size.sm},
+  screen: {flex: 1, backgroundColor: '#f9fafb'},
+  loader: {flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb'},
+  hero: {backgroundColor: GREEN, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12},
+  backRow: {flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1},
+  subject: {color: '#fff', fontSize: font.size.md, fontWeight: font.weight.bold, flex: 1},
+  pill: {borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4},
+  pillText: {color: '#fff', fontSize: 10, fontWeight: font.weight.bold},
+  messages: {padding: 16, gap: 10},
+  bubbleRow: {flexDirection: 'row', marginBottom: 10},
+  bubble: {maxWidth: '80%', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10},
+  bubbleSupport: {backgroundColor: '#fff', borderTopLeftRadius: 4, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 1},
+  bubbleUser: {backgroundColor: GREEN, borderTopRightRadius: 4},
+  sender: {color: GREEN, fontSize: 10, fontWeight: font.weight.bold, marginBottom: 2},
+  msgText: {fontSize: font.size.sm, lineHeight: 19},
+  msgTime: {fontSize: 9, marginTop: 4, alignSelf: 'flex-end'},
+  closedBar: {padding: 16, alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#e5e7eb', backgroundColor: '#fff'},
+  closedText: {color: '#9ca3af', fontSize: font.size.sm},
+  replyBar: {flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#e5e7eb', backgroundColor: '#fff'},
+  replyInput: {flex: 1, backgroundColor: '#f3f4f6', borderRadius: 999, paddingHorizontal: 16, paddingVertical: 10, fontSize: font.size.sm, color: '#1f2937'},
+  sendBtn: {width: 44, height: 44, borderRadius: 22, backgroundColor: GREEN, alignItems: 'center', justifyContent: 'center'},
 });

@@ -23,5 +23,6 @@ export function statusMeta(status: string): {label: string; color: string; bg: s
 }
 
 export function money(n: number | undefined | null): string {
-  return `${Number(n ?? 0).toLocaleString('fr-FR')} FCFA`;
+  // Montants toujours en entiers (pas de décimales) — FCFA.
+  return `${Math.round(Number(n ?? 0)).toLocaleString('fr-FR')} FCFA`;
 }

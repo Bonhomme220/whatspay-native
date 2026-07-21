@@ -10,6 +10,8 @@ import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/ResetPasswordScreen';
 import ReactivationScreen from '../screens/ReactivationScreen';
 import MissionDetailScreen from '../screens/MissionDetailScreen';
+import SubmitProofScreen from '../screens/SubmitProofScreen';
+import SubmissionScreen from '../screens/SubmissionScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import WithdrawScreen from '../screens/WithdrawScreen';
 import AmbassadorScreen from '../screens/AmbassadorScreen';
@@ -22,6 +24,9 @@ import NewComplaintScreen from '../screens/NewComplaintScreen';
 import FaqScreen from '../screens/FaqScreen';
 import MainTabs from './MainTabs';
 import PushBootstrap from './PushBootstrap';
+import AppDrawer from '../components/AppDrawer';
+import LocationUpdateModal from '../components/LocationUpdateModal';
+import {DrawerProvider} from '../context/DrawerContext';
 import {navigationRef} from './navigationRef';
 import {colors} from '../theme';
 
@@ -36,6 +41,8 @@ export type AuthStackParamList = {
 export type AppStackParamList = {
   Tabs: NavigatorScreenParams<TabParamList> | undefined;
   MissionDetail: {id: string};
+  SubmitProof: {id: string};
+  Submission: {id: string};
   Notifications: undefined;
   Withdraw: {balance: number};
   Ambassador: undefined;
@@ -65,11 +72,13 @@ function AuthNavigator() {
 
 function AppNavigator() {
   return (
-    <>
+    <DrawerProvider>
       <PushBootstrap />
       <AppStack.Navigator screenOptions={{headerShown: false, contentStyle: {backgroundColor: colors.bg}}}>
         <AppStack.Screen name="Tabs" component={MainTabs} />
         <AppStack.Screen name="MissionDetail" component={MissionDetailScreen} />
+        <AppStack.Screen name="SubmitProof" component={SubmitProofScreen} />
+        <AppStack.Screen name="Submission" component={SubmissionScreen} />
         <AppStack.Screen name="Notifications" component={NotificationsScreen} />
         <AppStack.Screen name="Withdraw" component={WithdrawScreen} />
         <AppStack.Screen name="Ambassador" component={AmbassadorScreen} />
@@ -81,7 +90,9 @@ function AppNavigator() {
         <AppStack.Screen name="NewComplaint" component={NewComplaintScreen} />
         <AppStack.Screen name="Faq" component={FaqScreen} />
       </AppStack.Navigator>
-    </>
+      <AppDrawer />
+      <LocationUpdateModal />
+    </DrawerProvider>
   );
 }
 

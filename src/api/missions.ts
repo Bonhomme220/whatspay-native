@@ -16,6 +16,7 @@ export interface MissionTask {
   is_civic?: boolean;
   client_name?: string;
   category?: {id: string; name: string} | null;
+  slots_used?: number;
 }
 
 export interface Mission {
@@ -33,6 +34,7 @@ export interface Mission {
   tracking_stats?: TrackingStats | null;
   reason_title?: string | null;
   reason_description?: string | null;
+  files?: string | null; // capture soumise (au niveau assignation)
 }
 
 export interface TrackingStats {
