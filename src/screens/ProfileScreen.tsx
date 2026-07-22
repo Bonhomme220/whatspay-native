@@ -228,11 +228,15 @@ export default function ProfileScreen() {
         visible={showBadge}
         onClose={() => setShowBadge(false)}
         firstname={pr.firstname ?? user?.firstname}
-        lastname={pr.lastname ?? user?.lastname}
-        isAmbassador={pr.is_ambassador}
-        ambassadorCode={pr.ambassador_code}
+        lastInitial={(pr.lastname ?? user?.lastname ?? '')[0]?.toUpperCase() ?? ''}
+        year={pr.created_at ? String(new Date(pr.created_at).getFullYear()) : ''}
+        totalViews={pr.total_views ?? 0}
         completedCampaigns={pr.completed_campaigns}
         reliability={reliability}
+        isAmbassador={pr.is_ambassador}
+        code={pr.ambassador_code}
+        activeReferrals={pr.ambassador_stat?.active_referrals}
+        civicCount={pr.civic_count}
       />
     </View>
   );
