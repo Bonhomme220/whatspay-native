@@ -4,7 +4,6 @@ import DashboardScreen from '../screens/DashboardScreen';
 import MissionsScreen from '../screens/MissionsScreen';
 import GainsScreen from '../screens/GainsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
-import AppHeader from '../components/AppHeader';
 import Icon from '../components/Icon';
 import {colors, font} from '../theme';
 
@@ -28,7 +27,7 @@ export default function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={({route}) => ({
-        header: () => <AppHeader />,
+        headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: '#9ca3af',
         tabBarStyle: {

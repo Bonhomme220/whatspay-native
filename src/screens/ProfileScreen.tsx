@@ -15,8 +15,23 @@ import type {AppStackParamList} from '../navigation/RootNavigator';
 import {useAuth} from '../context/AuthContext';
 import {fetchProfile, ProfileData} from '../api/profile';
 import KycStatusCard from '../components/KycStatusCard';
+import ShareBadgeModal from '../components/ShareBadgeModal';
 import Icon from '../components/Icon';
 import {font} from '../theme';
+
+function rateColor(v: number | null): string {
+  if (v == null) return '#9ca3af';
+  return v >= 70 ? '#16a34a' : v >= 40 ? '#eab308' : '#ef4444';
+}
+function PerfCard({label, value, color, sub}: {label: string; value: string; color: string; sub: string}) {
+  return (
+    <View style={styles.perfCard}>
+      <Text style={styles.perfLabel2}>{label}</Text>
+      <Text style={[styles.perfValue2, {color}]}>{value}</Text>
+      <Text style={styles.perfSub}>{sub}</Text>
+    </View>
+  );
+}
 
 type Nav = NativeStackNavigationProp<AppStackParamList>;
 const GREEN = '#16a34a';
@@ -47,6 +62,7 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showLogout, setShowLogout] = useState(false);
+  const [showBadge, setShowBadge] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -65,6 +81,12 @@ export default function ProfileScreen() {
   }
   const pr: any = p ?? {};
   const fullName = `${pr.firstname ?? user?.firstname ?? ''} ${pr.lastname ?? user?.lastname ?? ''}`.trim();
+
+  const ar = pr.acceptance_rate != null ? Number(pr.acceptance_rate) : null;
+  const cr = pr.completion_rate != null ? Number(pr.completion_rate) : null;
+  const totalClics = Number(pr.total_clics ?? 0);
+  const hasPerf = ar != null || cr != null || totalClics > 0;
+  const reliability = ar != null || cr != null ? (cr ?? 0) * 0.6 + (ar ?? 0) * 0.4 : null;
 
   return (
     <View style={styles.screen}>
@@ -112,22 +134,30 @@ export default function ProfileScreen() {
         <View style={styles.body}>
           <KycStatusCard />
 
+          {/* Partager mon badge */}
+          <TouchableOpacity style={[styles.linkCard, pr.is_ambassador && {backgroundColor: '#fffbeb', borderWidth: 1, borderColor: '#fde68a'}]} onPress={() => setShowBadge(true)}>
+            <View style={styles.linkLeft}>
+              <View style={[styles.linkIcon, {backgroundColor: pr.is_ambassador ? '#fef3c7' : '#dcfce7'}]}>
+                <Icon name="share-social" size={18} color={pr.is_ambassador ? '#ca8a04' : GREEN} />
+              </View>
+              <View>
+                <Text style={styles.linkText}>Partager mon badge</Text>
+                <Text style={styles.linkSub}>{pr.is_ambassador ? 'Mon réseau. Mes gains.' : 'Je fais partie du mouvement.'}</Text>
+              </View>
+            </View>
+            <Icon name="chevron-forward" size={18} color="#9ca3af" />
+          </TouchableOpacity>
+
           {/* Performance */}
-          {(pr.acceptance_rate != null || pr.completion_rate != null) && (
+          {hasPerf && (
             <View style={styles.card}>
               <Text style={styles.overline}>Performance</Text>
-              <View style={styles.perfRow}>
-                {pr.acceptance_rate != null && (
-                  <View style={styles.perfItem}>
-                    <Text style={styles.perfVal}>{Math.round(Number(pr.acceptance_rate))}%</Text>
-                    <Text style={styles.perfLabel}>Taux d'acceptation</Text>
-                  </View>
-                )}
-                {pr.completion_rate != null && (
-                  <View style={styles.perfItem}>
-                    <Text style={styles.perfVal}>{Math.round(Number(pr.completion_rate))}%</Text>
-                    <Text style={styles.perfLabel}>Taux de complétion</Text>
-                  </View>
+              <View style={styles.perfGrid}>
+                <PerfCard label="Taux d'acceptation" value={ar != null ? `${Number(ar.toFixed(1))}%` : '—'} color={rateColor(ar)} sub="soumissions validées" />
+                <PerfCard label="Taux de complétion" value={cr != null ? `${Number(cr.toFixed(1))}%` : '—'} color={rateColor(cr)} sub="missions menées à bout" />
+                <PerfCard label="Score de fiabilité" value={reliability != null ? `${Math.round(reliability)}/100` : '—'} color={rateColor(reliability)} sub="complétion + acceptation" />
+                {totalClics > 0 && (
+                  <PerfCard label="Clics générés" value={fmt(totalClics)} color="#2563eb" sub={`dont ${fmt(pr.unique_clics)} uniques`} />
                 )}
               </View>
             </View>
@@ -193,6 +223,17 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
+
+      <ShareBadgeModal
+        visible={showBadge}
+        onClose={() => setShowBadge(false)}
+        firstname={pr.firstname ?? user?.firstname}
+        lastname={pr.lastname ?? user?.lastname}
+        isAmbassador={pr.is_ambassador}
+        ambassadorCode={pr.ambassador_code}
+        completedCampaigns={pr.completed_campaigns}
+        reliability={reliability}
+      />
     </View>
   );
 }
@@ -238,6 +279,12 @@ const styles = StyleSheet.create({
   linkLeft: {flexDirection: 'row', alignItems: 'center', gap: 12},
   linkIcon: {width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center'},
   linkText: {color: '#1f2937', fontSize: font.size.sm, fontWeight: font.weight.medium},
+  linkSub: {color: '#9ca3af', fontSize: font.size.xs, marginTop: 1},
+  perfGrid: {flexDirection: 'row', flexWrap: 'wrap', gap: 12},
+  perfCard: {width: '47%', backgroundColor: '#f9fafb', borderRadius: 12, padding: 12},
+  perfLabel2: {color: '#6b7280', fontSize: 10, fontWeight: font.weight.medium},
+  perfValue2: {fontSize: font.size.xl, fontWeight: font.weight.bold, marginTop: 4},
+  perfSub: {color: '#9ca3af', fontSize: 9, marginTop: 2},
   dangerCard: {backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#fee2e2'},
   dangerTitle: {color: '#b91c1c', fontSize: 10, fontWeight: font.weight.bold, letterSpacing: 1, marginBottom: 12},
   dangerBtn: {flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10},

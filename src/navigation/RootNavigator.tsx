@@ -25,6 +25,7 @@ import FaqScreen from '../screens/FaqScreen';
 import MainTabs from './MainTabs';
 import PushBootstrap from './PushBootstrap';
 import AppDrawer from '../components/AppDrawer';
+import AppHeader from '../components/AppHeader';
 import LocationUpdateModal from '../components/LocationUpdateModal';
 import {DrawerProvider} from '../context/DrawerContext';
 import {navigationRef} from './navigationRef';
@@ -74,7 +75,7 @@ function AppNavigator() {
   return (
     <DrawerProvider>
       <PushBootstrap />
-      <AppStack.Navigator screenOptions={{headerShown: false, contentStyle: {backgroundColor: colors.bg}}}>
+      <AppStack.Navigator screenOptions={{header: () => <AppHeader />, contentStyle: {backgroundColor: colors.bg}}}>
         <AppStack.Screen name="Tabs" component={MainTabs} />
         <AppStack.Screen name="MissionDetail" component={MissionDetailScreen} />
         <AppStack.Screen name="SubmitProof" component={SubmitProofScreen} />

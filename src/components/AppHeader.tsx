@@ -1,5 +1,6 @@
 import React, {useCallback, useState} from 'react';
 import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {AppStackParamList} from '../navigation/RootNavigator';
@@ -14,6 +15,7 @@ type Nav = NativeStackNavigationProp<AppStackParamList>;
 export default function AppHeader() {
   const navigation = useNavigation<Nav>();
   const {openDrawer} = useDrawer();
+  const insets = useSafeAreaInsets();
   const [unread, setUnread] = useState(0);
 
   useFocusEffect(
@@ -25,7 +27,7 @@ export default function AppHeader() {
   );
 
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, {height: 56 + insets.top, paddingTop: insets.top}]}>
       <TouchableOpacity onPress={openDrawer} style={styles.iconBtn} hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
         <Icon name="menu-outline" size={26} color="#4b5563" />
       </TouchableOpacity>

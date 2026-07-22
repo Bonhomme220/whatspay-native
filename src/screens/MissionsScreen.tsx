@@ -85,12 +85,14 @@ export default function MissionsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [accepting, setAccepting] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    setError(null);
     try {
       setData(await fetchMissions());
-    } catch {
-      // 401 géré globalement
+    } catch (e) {
+      setError(apiErrorMessage(e, 'Impossible de charger les campagnes.'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -157,6 +159,14 @@ export default function MissionsScreen() {
         <View style={{paddingHorizontal: 16, paddingTop: 16}}>
           {loading ? (
             <View style={styles.loader}><ActivityIndicator color={GREEN} size="large" /></View>
+          ) : error ? (
+            <View style={styles.empty}>
+              <View style={styles.emptyIcon}><Icon name="cloud-offline-outline" size={30} color="#9ca3af" /></View>
+              <Text style={styles.emptyText}>{error}</Text>
+              <TouchableOpacity style={styles.retryBtn} onPress={() => {setLoading(true); load();}}>
+                <Text style={styles.retryText}>Réessayer</Text>
+              </TouchableOpacity>
+            </View>
           ) : !data ? null : tab === 'disponibles' ? (
             data.disponibles.length === 0 ? (
               <Empty text="Aucune mission disponible pour le moment." />
@@ -340,4 +350,6 @@ const styles = StyleSheet.create({
   empty: {alignItems: 'center', paddingVertical: 60},
   emptyIcon: {width: 64, height: 64, borderRadius: 32, backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center', marginBottom: 12},
   emptyText: {color: '#6b7280', fontSize: font.size.sm, textAlign: 'center'},
+  retryBtn: {marginTop: 12, backgroundColor: GREEN, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10},
+  retryText: {color: '#fff', fontSize: font.size.sm, fontWeight: font.weight.bold},
 });
