@@ -2,35 +2,40 @@ import React, {useState} from 'react';
 import {ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Button, TextField} from '../components/ui';
+import {DateField} from '../components/DateField';
 import {colors, font, spacing} from '../theme';
 import {apiErrorMessage} from '../api/client';
-import {forgotPassword} from '../api/auth';
+import {verifyResetIdentity} from '../api/auth';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {AuthStackParamList} from '../navigation/RootNavigator';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
+const today = new Date();
+
 export default function ForgotPasswordScreen({navigation}: Props) {
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [birthdate, setBirthdate] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
     setError(null);
-    setMessage(null);
-    if (!email.trim()) {
-      setError('Renseigne ton email.');
+    if (!phone.trim()) {
+      setError('Renseigne ton numéro de téléphone.');
+      return;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(birthdate)) {
+      setError('Renseigne ta date de naissance.');
       return;
     }
     setLoading(true);
     try {
-      const data = await forgotPassword(email.trim());
-      setMessage(data?.message ?? 'Un code de réinitialisation a été envoyé par email.');
-      // Enchaîne vers la saisie du code + nouveau mot de passe.
-      navigation.navigate('ResetPassword', {email: email.trim()});
+      const data = await verifyResetIdentity(phone.trim(), birthdate);
+      // Identité vérifiée → écran de choix du nouveau mot de passe.
+      navigation.navigate('ResetPassword', {token: data.token, name: data.firstname});
     } catch (e) {
-      setError(apiErrorMessage(e, 'Envoi impossible.'));
+      setError(apiErrorMessage(e, 'Les informations fournies ne correspondent à aucun compte.'));
     } finally {
       setLoading(false);
     }
@@ -40,32 +45,34 @@ export default function ForgotPasswordScreen({navigation}: Props) {
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Mot de passe oublié</Text>
-        <Text style={styles.subtitle}>Entre ton email pour recevoir un lien de réinitialisation.</Text>
+        <Text style={styles.subtitle}>
+          Confirme ton identité pour réinitialiser ton mot de passe. Renseigne ton numéro de téléphone
+          et ta date de naissance, exactement comme lors de ton inscription.
+        </Text>
 
         <TextField
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          placeholder="ton@email.com"
+          label="Numéro de téléphone"
+          value={phone}
+          onChangeText={setPhone}
+          placeholder="97000000"
+          keyboardType="phone-pad"
           autoCapitalize="none"
-          keyboardType="email-address"
         />
 
-        {!!message && (
-          <View style={styles.okBox}>
-            <Text style={styles.okText}>{message}</Text>
-          </View>
-        )}
+        <DateField
+          label="Date de naissance"
+          value={birthdate}
+          onChange={setBirthdate}
+          maximumDate={today}
+        />
+
         {!!error && (
           <View style={styles.errorBox}>
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
 
-        <Button title="Envoyer le code" onPress={submit} loading={loading} style={{marginTop: spacing.sm}} />
-        <TouchableOpacity style={styles.back} onPress={() => navigation.navigate('ResetPassword', {email: email.trim()})}>
-          <Text style={styles.backText}>J'ai déjà un code ›</Text>
-        </TouchableOpacity>
+        <Button title="Vérifier mon identité" onPress={submit} loading={loading} style={{marginTop: spacing.sm}} />
         <TouchableOpacity style={styles.back} onPress={() => navigation.goBack()}>
           <Text style={styles.backText}>‹ Retour à la connexion</Text>
         </TouchableOpacity>
@@ -79,8 +86,6 @@ const styles = StyleSheet.create({
   scroll: {flexGrow: 1, justifyContent: 'center', padding: spacing.xl},
   title: {fontSize: font.size.xl, fontWeight: font.weight.bold, color: colors.text},
   subtitle: {fontSize: font.size.sm, color: colors.textMuted, marginTop: spacing.xs, marginBottom: spacing.lg},
-  okBox: {backgroundColor: colors.primarySoft, borderRadius: 10, padding: spacing.md, marginBottom: spacing.sm},
-  okText: {color: colors.primaryDark, fontSize: font.size.sm},
   errorBox: {backgroundColor: colors.dangerSoft, borderRadius: 10, padding: spacing.md, marginBottom: spacing.sm},
   errorText: {color: colors.danger, fontSize: font.size.sm},
   back: {alignSelf: 'center', marginTop: spacing.lg},

@@ -85,6 +85,32 @@ export async function resetPassword(
   return data;
 }
 
+/**
+ * POST /auth/reset-verify-identity — vérifie l'identité (téléphone + date de
+ * naissance simultanément) et renvoie un jeton court à usage unique.
+ */
+export async function verifyResetIdentity(
+  phone: string,
+  birthdate: string,
+): Promise<{message?: string; token: string; firstname?: string}> {
+  const {data} = await api.post('/auth/reset-verify-identity', {phone, birthdate});
+  return data;
+}
+
+/** POST /auth/reset-with-identity — pose le nouveau mot de passe via le jeton d'identité. */
+export async function resetPasswordWithIdentity(
+  token: string,
+  password: string,
+  password_confirmation: string,
+): Promise<{message?: string}> {
+  const {data} = await api.post('/auth/reset-with-identity', {
+    token,
+    password,
+    password_confirmation,
+  });
+  return data;
+}
+
 /** POST /fcm-token — enregistre le token FCM du device pour les push. */
 export async function registerFcmToken(token: string): Promise<void> {
   await api.post('/fcm-token', {fcm_token: token});

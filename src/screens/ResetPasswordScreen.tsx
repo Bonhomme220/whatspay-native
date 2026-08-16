@@ -5,21 +5,23 @@ import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {AuthStackParamList} from '../navigation/RootNavigator';
 import {colors, font, spacing} from '../theme';
 import {Button, TextField} from '../components/ui';
-import {resetPassword} from '../api/auth';
+import {resetPasswordWithIdentity} from '../api/auth';
 import {apiErrorMessage} from '../api/client';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;
 
 export default function ResetPasswordScreen({route, navigation}: Props) {
-  const [email, setEmail] = useState(route.params?.email ?? '');
-  const [code, setCode] = useState('');
+  const token = route.params?.token ?? '';
+  const name = route.params?.name;
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
-    if (!email.trim() || !code.trim()) {
-      Alert.alert('Champs requis', 'Renseigne ton email et le code reçu.');
+    if (!token) {
+      Alert.alert('Session expirée', 'Recommence la vérification d\'identité.', [
+        {text: 'OK', onPress: () => navigation.navigate('ForgotPassword')},
+      ]);
       return;
     }
     if (password.length < 8) {
@@ -32,7 +34,7 @@ export default function ResetPasswordScreen({route, navigation}: Props) {
     }
     setBusy(true);
     try {
-      const r = await resetPassword(email.trim(), code.trim(), password, confirm);
+      const r = await resetPasswordWithIdentity(token, password, confirm);
       Alert.alert('Mot de passe réinitialisé', r.message ?? 'Tu peux te connecter.', [
         {text: 'OK', onPress: () => navigation.navigate('Login')},
       ]);
@@ -43,14 +45,26 @@ export default function ResetPasswordScreen({route, navigation}: Props) {
     }
   };
 
+  if (!token) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          <Text style={styles.title}>Lien invalide</Text>
+          <Text style={styles.subtitle}>
+            Cet écran doit être ouvert après la vérification de ton identité.
+          </Text>
+          <Button title="Recommencer" onPress={() => navigation.navigate('ForgotPassword')} style={{marginTop: spacing.sm}} />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Réinitialiser le mot de passe</Text>
-        <Text style={styles.subtitle}>Entre le code reçu par email et ton nouveau mot de passe.</Text>
+        <Text style={styles.title}>{name ? `Bonjour ${name} 👋` : 'Nouveau mot de passe'}</Text>
+        <Text style={styles.subtitle}>Identité vérifiée. Choisis ton nouveau mot de passe.</Text>
 
-        <TextField label="Email" value={email} onChangeText={setEmail} placeholder="ton@email.com" autoCapitalize="none" keyboardType="email-address" />
-        <TextField label="Code reçu" value={code} onChangeText={setCode} placeholder="Code de vérification" autoCapitalize="none" />
         <TextField label="Nouveau mot de passe" value={password} onChangeText={setPassword} placeholder="8 caractères min." secureTextEntry />
         <TextField label="Confirmer" value={confirm} onChangeText={setConfirm} placeholder="Répète le mot de passe" secureTextEntry />
 
