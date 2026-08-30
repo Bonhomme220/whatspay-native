@@ -163,6 +163,29 @@ export default function ProfileScreen() {
             </View>
           )}
 
+          {/* Performance par centre d'intérêt */}
+          {Array.isArray(pr.by_category) && pr.by_category.length > 0 && (
+            <View style={styles.card}>
+              <Text style={styles.overline}>Par centre d'intérêt</Text>
+              <Text style={{fontSize: 11, color: '#9ca3af', marginBottom: 10}}>Vos vues, clics et taux de conversion selon les thèmes des campagnes diffusées.</Text>
+              {pr.by_category.map((c: any, i: number) => (
+                <View key={i} style={styles.catRow}>
+                  <View style={styles.rowBetween}>
+                    <Text style={styles.catName}>{c.name}</Text>
+                    <Text style={[styles.catConv, {color: (c.conversion ?? 0) >= 2 ? '#16a34a' : '#6b7280', backgroundColor: (c.conversion ?? 0) >= 2 ? '#dcfce7' : '#f3f4f6'}]}>
+                      {c.conversion !== null && c.conversion !== undefined ? `${c.conversion}% conv.` : '—'}
+                    </Text>
+                  </View>
+                  <View style={{flexDirection: 'row', gap: 14, marginTop: 3}}>
+                    <Text style={styles.catStat}>👁️ {fmt(c.vues)} vues</Text>
+                    <Text style={[styles.catStat, {color: '#2563eb'}]}>🖱️ {fmt(c.clics)} clics</Text>
+                    <Text style={styles.catStat}>📣 {fmt(c.campaigns)}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
           {/* Infos personnelles */}
           <View style={styles.card}>
             <View style={styles.rowBetween}>
@@ -268,6 +291,10 @@ const styles = StyleSheet.create({
   card: {backgroundColor: '#fff', borderRadius: 16, padding: 16, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2},
   overline: {color: '#6b7280', fontSize: 10, fontWeight: font.weight.bold, letterSpacing: 1, marginBottom: 12},
   rowBetween: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'},
+  catRow: {borderWidth: 1, borderColor: '#f1f1f4', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 8},
+  catName: {fontSize: 14, fontWeight: font.weight.medium, color: '#374151'},
+  catConv: {fontSize: 11, fontWeight: font.weight.bold, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, overflow: 'hidden'},
+  catStat: {fontSize: 11, color: '#6b7280'},
   editLink: {color: GREEN, fontSize: font.size.xs, fontWeight: font.weight.bold, marginBottom: 12},
   perfRow: {flexDirection: 'row', gap: 12},
   perfItem: {flex: 1, backgroundColor: '#f9fafb', borderRadius: 12, padding: 12, alignItems: 'center'},
