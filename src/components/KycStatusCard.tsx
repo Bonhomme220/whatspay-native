@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Linking, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {AppState, Linking, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {fetchKycState, KycState} from '../api/kyc';
 import Icon from './Icon';
 import {font} from '../theme';
@@ -15,25 +15,36 @@ export default function KycStatusCard() {
   const [s, setS] = useState<KycState | null>(null);
 
   useEffect(() => {
-    fetchKycState().then(setS).catch(() => {});
+    const refresh = () => { fetchKycState().then(setS).catch(() => {}); };
+    refresh();
+    // Rafraîchit au retour au premier plan (ex. retour du parcours KYC web / correction demandée).
+    const sub = AppState.addEventListener('change', st => { if (st === 'active') refresh(); });
+    return () => sub.remove();
   }, []);
 
   if (!s) return null;
 
   const open = () => { if (s.verify_url) Linking.openURL(s.verify_url); };
 
-  const cfg = {
-    verified: {icon: 'checkmark-circle', ic: '#16a34a', iconBg: '#dcfce7', bg: '#f0fdf4', bd: '#bbf7d0', title: '#166534', t: 'Identité vérifiée', sub: 'Ton identité est confirmée.'},
-    submitted: {icon: 'time', ic: '#d97706', iconBg: '#fef3c7', bg: '#fffbeb', bd: '#fde68a', title: '#92400e', t: 'Vérification en cours', sub: 'Nous examinons ta pièce.'},
-    pending: {icon: 'shield-checkmark', ic: '#16a34a', iconBg: '#dcfce7', bg: '#fff', bd: '#f3f4f6', title: '#111827', t: 'Vérifie ton identité', sub: ''},
-    rejected: {icon: 'alert-circle', ic: '#dc2626', iconBg: '#fee2e2', bg: '#fef2f2', bd: '#fecaca', title: '#b91c1c', t: 'Vérification refusée', sub: 'Reprends la vérification.'},
-  }[s.kyc_status];
+  // À corriger (resubmit) : renvoyée par l'admin avec un motif → action requise.
+  const isResubmit = s.attempt_status === 'resubmit';
+
+  const cfg = isResubmit
+    ? {icon: 'create', ic: '#d97706', iconBg: '#fef3c7', bg: '#fffbeb', bd: '#fde68a', title: '#92400e', t: 'Vérification à corriger', sub: ''}
+    : {
+        verified: {icon: 'checkmark-circle', ic: '#16a34a', iconBg: '#dcfce7', bg: '#f0fdf4', bd: '#bbf7d0', title: '#166534', t: 'Identité vérifiée', sub: 'Ton identité est confirmée.'},
+        submitted: {icon: 'time', ic: '#d97706', iconBg: '#fef3c7', bg: '#fffbeb', bd: '#fde68a', title: '#92400e', t: 'Vérification en cours', sub: 'Nous examinons ta pièce.'},
+        pending: {icon: 'shield-checkmark', ic: '#16a34a', iconBg: '#dcfce7', bg: '#fff', bd: '#f3f4f6', title: '#111827', t: 'Vérifie ton identité', sub: ''},
+        rejected: {icon: 'alert-circle', ic: '#dc2626', iconBg: '#fee2e2', bg: '#fef2f2', bd: '#fecaca', title: '#b91c1c', t: 'Vérification refusée', sub: 'Reprends la vérification.'},
+      }[s.kyc_status];
 
   const d = daysLeft(s.deadline);
-  const actionable = s.kyc_status === 'pending' || s.kyc_status === 'rejected';
-  const subText = s.kyc_status === 'pending'
-    ? (d !== null ? `Il te reste ${d} jour${d > 1 ? 's' : ''} pour vérifier ton identité.` : 'Vérification requise pour recevoir des campagnes.')
-    : cfg.sub;
+  const actionable = isResubmit || s.kyc_status === 'pending' || s.kyc_status === 'rejected';
+  const subText = isResubmit
+    ? (s.reason ? `${s.reason} Corrige et renvoie ta pièce.` : 'Une information doit être corrigée. Corrige et renvoie ta pièce.')
+    : s.kyc_status === 'pending'
+      ? (d !== null ? `Il te reste ${d} jour${d > 1 ? 's' : ''} pour vérifier ton identité.` : 'Vérification requise pour recevoir des campagnes.')
+      : cfg.sub;
 
   return (
     <TouchableOpacity

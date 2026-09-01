@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Linking, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {AppState, Linking, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {colors, font, radius, spacing} from '../theme';
 import {fetchKycState, KycState} from '../api/kyc';
 
@@ -14,7 +14,12 @@ export default function KycBanner() {
   const [state, setState] = useState<KycState | null>(null);
 
   useEffect(() => {
-    fetchKycState().then(setState).catch(() => {});
+    const refresh = () => { fetchKycState().then(setState).catch(() => {}); };
+    refresh();
+    // Rafraîchit au retour au premier plan (ex. retour du parcours KYC web) : une identité
+    // renvoyée pour correction doit s'afficher sans redémarrer l'app.
+    const sub = AppState.addEventListener('change', s => { if (s === 'active') refresh(); });
+    return () => sub.remove();
   }, []);
 
   if (!state || !state.required) return null;
