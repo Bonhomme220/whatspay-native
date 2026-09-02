@@ -59,7 +59,7 @@ export default function AmbassadorScreen({navigation}: Props) {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   // Lien de parrainage : ouvre l'inscription avec le code du parrain pré-rempli et verrouillé.
-  const referralLink = (c: string) => `https://whatspay.africa/r/${encodeURIComponent(c)}`;
+  const referralLink = (c: string) => `https://app.whatspay.africa/r/${encodeURIComponent(c)}`;
   const copy = (c: string) => {
     Clipboard.setString(referralLink(c));
     setCopied(true);
