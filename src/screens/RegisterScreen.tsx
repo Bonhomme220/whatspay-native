@@ -23,6 +23,7 @@ import {DateField} from '../components/DateField';
 import {useAuth} from '../context/AuthContext';
 import {apiErrorMessage} from '../api/client';
 import {register} from '../api/auth';
+import {fetchAmbassadorName} from '../api/ambassador';
 import {
   fetchArrondissements,
   fetchCategories,
@@ -100,6 +101,20 @@ export default function RegisterScreen({navigation}: Props) {
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [ambassadorCode, setAmbassadorCode] = useState('');
+  const [ambassadorName, setAmbassadorName] = useState<string | null>(null);
+
+  // Nom du parrain (affiché sous le champ « Vous êtes invité par … »).
+  useEffect(() => {
+    const code = ambassadorCode.trim();
+    if (!code) { setAmbassadorName(null); return; }
+    let cancelled = false;
+    const t = setTimeout(() => {
+      fetchAmbassadorName(code)
+        .then(r => { if (!cancelled) setAmbassadorName(r.found ? r.name : null); })
+        .catch(() => { if (!cancelled) setAmbassadorName(null); });
+    }, 400);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [ambassadorCode]);
 
   useEffect(() => {
     (async () => {
@@ -272,7 +287,11 @@ export default function RegisterScreen({navigation}: Props) {
                   <TextField label="Adresse mail" value={email} onChangeText={setEmail} placeholder="votre@mail.com" autoCapitalize="none" keyboardType="email-address" />
                   <DateField label="Date de naissance" value={birthdate} onChange={setBirthdate} maximumDate={maxBirthdate} />
                   <TextField label="Code ambassadeur (facultatif)" value={ambassadorCode} onChangeText={t => setAmbassadorCode(t.toUpperCase())} placeholder="Ex : WTP-ABC123" autoCapitalize="characters" />
-                  <Text style={styles.hint}>Un ambassadeur t'a invité ? Entre son code. Sinon laisse vide.</Text>
+                  {ambassadorName ? (
+                    <Text style={[styles.hint, {color: '#16a34a', fontWeight: font.weight.bold}]}>✓ Vous êtes invité par {ambassadorName}</Text>
+                  ) : (
+                    <Text style={styles.hint}>Un ambassadeur t'a invité ? Entre son code. Sinon laisse vide.</Text>
+                  )}
                 </>
               )}
 

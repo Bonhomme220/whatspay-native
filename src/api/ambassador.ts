@@ -23,6 +23,12 @@ export async function fetchAmbassador(): Promise<AmbassadorData> {
   return data;
 }
 
+/** GET /auth/ambassador-name/{code} — nom du parrain (public, pour l'inscription). */
+export async function fetchAmbassadorName(code: string): Promise<{found: boolean; name: string | null}> {
+  const {data} = await api.get<{found: boolean; name: string | null}>(`/auth/ambassador-name/${encodeURIComponent(code)}`);
+  return data;
+}
+
 /** POST /ambassador/activate — devient ambassadeur (si éligible). */
 export async function activateAmbassador(): Promise<{success: boolean; message: string; ambassador_code?: string}> {
   const {data} = await api.post('/ambassador/activate');
