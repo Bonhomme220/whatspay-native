@@ -271,6 +271,8 @@ export default function RegisterScreen({navigation}: Props) {
                   </View>
                   <TextField label="Adresse mail" value={email} onChangeText={setEmail} placeholder="votre@mail.com" autoCapitalize="none" keyboardType="email-address" />
                   <DateField label="Date de naissance" value={birthdate} onChange={setBirthdate} maximumDate={maxBirthdate} />
+                  <TextField label="Code ambassadeur (facultatif)" value={ambassadorCode} onChangeText={t => setAmbassadorCode(t.toUpperCase())} placeholder="Ex : WTP-ABC123" autoCapitalize="characters" />
+                  <Text style={styles.hint}>Un ambassadeur t'a invité ? Entre son code. Sinon laisse vide.</Text>
                 </>
               )}
 
@@ -325,9 +327,6 @@ export default function RegisterScreen({navigation}: Props) {
                     placeholderTextColor="#9ca3af"
                     secureTextEntry={!showPwd}
                   />
-
-                  <TextField label="Code ambassadeur (facultatif)" value={ambassadorCode} onChangeText={t => setAmbassadorCode(t.toUpperCase())} placeholder="Ex : WTP-ABC123" autoCapitalize="characters" />
-                  <Text style={styles.hint}>Un ambassadeur t'a invité ? Entre son code. Sinon laisse vide.</Text>
                 </>
               )}
 
