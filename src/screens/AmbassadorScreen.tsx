@@ -58,13 +58,15 @@ export default function AmbassadorScreen({navigation}: Props) {
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
+  // Lien de parrainage : ouvre l'inscription avec le code du parrain pré-rempli et verrouillé.
+  const referralLink = (c: string) => `https://whatspay.africa/r/${encodeURIComponent(c)}`;
   const copy = (c: string) => {
-    Clipboard.setString(c);
+    Clipboard.setString(referralLink(c));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
   const share = (c: string) => {
-    Share.share({message: `Rejoins WhatsPAY avec mon code ambassadeur ${c} et monétise tes Status WhatsApp ! https://whatspay.africa`}).catch(() => {});
+    Share.share({message: `Rejoins WhatsPAY avec mon code ambassadeur ${c} et monétise tes Status WhatsApp ! Inscris-toi ici : ${referralLink(c)}`}).catch(() => {});
   };
 
   const submitCode = async () => {
