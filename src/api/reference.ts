@@ -6,8 +6,12 @@ export interface Ref {
 }
 
 async function getList(url: string): Promise<Ref[]> {
-  const {data} = await api.get<Ref[]>(url);
-  return Array.isArray(data) ? data : [];
+  const {data} = await api.get<any>(url);
+  // Certains endpoints (localités/arrondissements/quartiers) renvoient
+  // { success, data: [...], total } au lieu d'un tableau brut.
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+  return [];
 }
 
 export interface CountryRef extends Ref {

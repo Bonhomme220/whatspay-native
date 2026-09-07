@@ -184,18 +184,6 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* Canal WhatsApp */}
-        {showWa && (
-          <TouchableOpacity style={styles.waCard} onPress={joinChannel} activeOpacity={0.9}>
-            <View style={styles.waIcon}><Icon name="logo-whatsapp" size={20} color="#fff" /></View>
-            <View style={{flex: 1}}>
-              <Text style={styles.waTitle}>Chaîne WhatsApp officielle</Text>
-              <Text style={styles.waSub}>Actualités, campagnes et annonces en temps réel</Text>
-            </View>
-            <View style={styles.waJoin}><Text style={styles.waJoinText}>Rejoindre</Text></View>
-          </TouchableOpacity>
-        )}
-
         {/* Actions Rapides */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Actions Rapides</Text>
@@ -206,6 +194,18 @@ export default function DashboardScreen() {
             <ActionBtn label="PARRAINAGE" icon="share-social-outline" bg={C.yellow} onPress={() => navigation.navigate('Ambassador')} />
           </View>
         </View>
+
+        {/* Canal WhatsApp — juste avant le tutoriel */}
+        {showWa && (
+          <TouchableOpacity style={styles.waCard} onPress={joinChannel} activeOpacity={0.9}>
+            <View style={styles.waIcon}><Icon name="logo-whatsapp" size={20} color="#fff" /></View>
+            <View style={{flex: 1}}>
+              <Text style={styles.waTitle}>Chaîne WhatsApp officielle</Text>
+              <Text style={styles.waSub}>Actualités, campagnes et annonces en temps réel</Text>
+            </View>
+            <View style={styles.waJoin}><Text style={styles.waJoinText}>Rejoindre</Text></View>
+          </TouchableOpacity>
+        )}
 
         {/* Tutoriel vidéo */}
         <TouchableOpacity
