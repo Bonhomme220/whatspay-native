@@ -17,7 +17,7 @@ import {DashboardData, fetchDashboard} from '../api/dashboard';
 import {apiErrorMessage} from '../api/client';
 import {money, statusMeta} from '../lib/status';
 import {WHATSAPP_CHANNEL_URL} from '../config';
-import {markChannelJoined, markChannelShown} from '../api/kyc';
+import {markChannelJoined} from '../api/kyc';
 import NudgeBanners from '../components/NudgeBanners';
 import NudgeModalView from '../components/NudgeModalView';
 import KycBanner from '../components/KycBanner';
@@ -66,7 +66,6 @@ export default function DashboardScreen() {
   const [banners, setBanners] = useState<Nudge[]>([]);
   const [modal, setModal] = useState<Nudge | null>(null);
   const [dismissed, setDismissed] = useState<string[]>([]);
-  const [waHidden, setWaHidden] = useState(false);
 
   const onCta = useCallback(
     (cta: NudgeCta) => {
@@ -112,15 +111,14 @@ export default function DashboardScreen() {
     }, [load]),
   );
 
-  const showWa = !!data?.show_whatsapp_channel_modal && !waHidden;
-  useEffect(() => {
-    if (showWa) markChannelShown().catch(() => {});
-  }, [showWa]);
+  // Carte PERMANENTE : reste affichée tant que le canal n'est pas rejoint (pas de gating
+  // quotidien ni de fermeture locale — l'accès au canal doit toujours être visible).
+  const showWa = data?.user ? !data.user.whatsapp_channel_joined : false;
 
   const joinChannel = () => {
     markChannelJoined().catch(() => {});
     Linking.openURL(WHATSAPP_CHANNEL_URL);
-    setWaHidden(true);
+    setData((prev: any) => prev ? {...prev, user: {...prev.user, whatsapp_channel_joined: true}} : prev);
   };
 
   if (loading) {
