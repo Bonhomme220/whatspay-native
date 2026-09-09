@@ -119,6 +119,42 @@ export default function SubmissionScreen({route, navigation}: Props) {
             )}
           </View>
 
+          {/* Détail du calcul de paiement — transparence barème dégressif */}
+          {(mission.status === 'SUBMISSION_ACCEPTED' || mission.status === 'SUBMITED') && (
+            <View style={styles.card}>
+              <Text style={styles.label}>DÉTAIL DU GAIN</Text>
+              {mission.payout_mode === 'tiered' && mission.payout_breakdown && mission.payout_breakdown.length > 0 ? (
+                <View style={{marginTop: 8, gap: 6}}>
+                  {mission.payout_breakdown.map((t, i) => (
+                    <View key={i} style={styles.rowBetween}>
+                      <Text style={styles.payoutLine}>
+                        {t.views_in_tier.toLocaleString('fr-FR')} vues {t.to !== null ? `(${t.from}-${t.to})` : `(au-delà de ${t.from})`} × {t.rate.toFixed(2)} F
+                      </Text>
+                      <Text style={styles.payoutValue}>{t.subtotal.toLocaleString('fr-FR')} F</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <View style={[styles.rowBetween, {marginTop: 8}]}>
+                  <Text style={styles.payoutLine}>{mission.vues.toLocaleString('fr-FR')} vues × 1,00 F (taux plat)</Text>
+                  <Text style={styles.payoutValue}>{mission.vues.toLocaleString('fr-FR')} F</Text>
+                </View>
+              )}
+              {!!mission.ambassador_bonus && mission.ambassador_bonus > 0 && (
+                <View style={[styles.rowBetween, styles.payoutBonusRow]}>
+                  <Text style={styles.payoutLine}>Bonus ambassadeur</Text>
+                  <Text style={styles.payoutBonusValue}>+{mission.ambassador_bonus.toLocaleString('fr-FR')} F</Text>
+                </View>
+              )}
+              {!!mission.click_bonus && mission.click_bonus > 0 && (
+                <View style={[styles.rowBetween, styles.payoutBonusRow]}>
+                  <Text style={styles.payoutLine}>Bonus clics uniques ({mission.click_bonus_clicks} clics)</Text>
+                  <Text style={styles.payoutBonusValue}>+{mission.click_bonus.toLocaleString('fr-FR')} F</Text>
+                </View>
+              )}
+            </View>
+          )}
+
           {/* Capture */}
           <View style={styles.card}>
             <Text style={styles.label}>CAPTURE D'ÉCRAN</Text>
@@ -196,6 +232,10 @@ const styles = StyleSheet.create({
   openRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 8},
   openText: {color: GREEN, fontSize: font.size.xs, fontWeight: font.weight.bold},
   noCapture: {color: '#9ca3af', fontSize: font.size.sm, textAlign: 'center', paddingVertical: 16},
+  payoutLine: {color: '#6b7280', fontSize: font.size.xs, flexShrink: 1, paddingRight: 8},
+  payoutValue: {color: '#374151', fontSize: font.size.xs, fontWeight: font.weight.bold},
+  payoutBonusRow: {marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#f3f4f6'},
+  payoutBonusValue: {color: GREEN, fontSize: font.size.xs, fontWeight: font.weight.bold},
   complaintCard: {backgroundColor: '#fff7ed', borderWidth: 1, borderColor: '#fed7aa', borderRadius: 16, padding: 16},
   complaintTitle: {color: '#c2410c', fontSize: font.size.xs, fontWeight: font.weight.bold},
   complaintMsg: {color: '#7c2d12', fontSize: font.size.sm, marginTop: 6},

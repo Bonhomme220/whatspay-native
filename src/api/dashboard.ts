@@ -21,10 +21,17 @@ export interface DashboardData {
   monthly: {months: string[]; completed: number[]; gains: number[]};
   faqs: any[];
   show_whatsapp_channel_modal?: boolean;
+  show_tiered_payout_notice?: boolean;
+  tiered_payout_notice?: {days_left: number; grace_end_date: string} | null;
 }
 
 /** GET /dashboard — données de l'accueil diffuseur. */
 export async function fetchDashboard(): Promise<DashboardData> {
   const {data} = await api.get<DashboardData>('/dashboard');
   return data;
+}
+
+/** L'app a affiché le modal d'annonce du barème dégressif → marque le jour (1x/jour). */
+export async function markTieredPayoutNoticeShown(): Promise<void> {
+  await api.post('/tiered-payout-notice/shown');
 }

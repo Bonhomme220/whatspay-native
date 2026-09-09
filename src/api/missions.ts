@@ -19,6 +19,14 @@ export interface MissionTask {
   slots_used?: number;
 }
 
+export interface PayoutTier {
+  from: number;
+  to: number | null;
+  rate: number;
+  views_in_tier: number;
+  subtotal: number;
+}
+
 export interface Mission {
   id: string;
   status: string;
@@ -35,6 +43,13 @@ export interface Mission {
   reason_title?: string | null;
   reason_description?: string | null;
   files?: string | null; // capture soumise (au niveau assignation)
+  // Transparence du calcul de paiement — figé au moment du paiement (voir backend
+  // assignments.payout_mode/payout_breakdown/ambassador_bonus), jamais recalculé.
+  payout_mode?: 'flat' | 'tiered' | null;
+  payout_breakdown?: PayoutTier[] | null;
+  ambassador_bonus?: number | null;
+  click_bonus?: number | null;
+  click_bonus_clicks?: number | null;
 }
 
 export interface TrackingStats {

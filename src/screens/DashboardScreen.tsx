@@ -13,7 +13,7 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {AppStackParamList} from '../navigation/RootNavigator';
 import {colors, font, radius, spacing} from '../theme';
-import {DashboardData, fetchDashboard} from '../api/dashboard';
+import {DashboardData, fetchDashboard, markTieredPayoutNoticeShown} from '../api/dashboard';
 import {apiErrorMessage} from '../api/client';
 import {money, statusMeta} from '../lib/status';
 import {WHATSAPP_CHANNEL_URL} from '../config';
@@ -22,6 +22,7 @@ import NudgeBanners from '../components/NudgeBanners';
 import NudgeModalView from '../components/NudgeModalView';
 import KycBanner from '../components/KycBanner';
 import OnboardingModal from '../components/OnboardingModal';
+import TieredPayoutNoticeModal from '../components/TieredPayoutNoticeModal';
 import ProfileReviewBanner from '../components/ProfileReviewBanner';
 import Icon from '../components/Icon';
 import {acknowledgeIncident, fetchNudges, Nudge, NudgeCta} from '../api/nudges';
@@ -66,6 +67,8 @@ export default function DashboardScreen() {
   const [banners, setBanners] = useState<Nudge[]>([]);
   const [modal, setModal] = useState<Nudge | null>(null);
   const [dismissed, setDismissed] = useState<string[]>([]);
+  const [tieredNoticeVisible, setTieredNoticeVisible] = useState(false);
+  const [tieredShownMarked, setTieredShownMarked] = useState(false);
 
   const onCta = useCallback(
     (cta: NudgeCta) => {
@@ -97,6 +100,7 @@ export default function DashboardScreen() {
       setData(d);
       setBanners(n.banners);
       setModal(n.modal);
+      if (d.show_tiered_payout_notice) setTieredNoticeVisible(true);
     } catch (e) {
       setError(apiErrorMessage(e, 'Impossible de charger le tableau de bord.'));
     } finally {
@@ -120,6 +124,18 @@ export default function DashboardScreen() {
     Linking.openURL(WHATSAPP_CHANNEL_URL);
     setData((prev: any) => prev ? {...prev, user: {...prev.user, whatsapp_channel_joined: true}} : prev);
   };
+
+  // N'apparaît pas en même temps qu'un nudge modal (évite d'empiler deux modals).
+  const showTieredNotice = tieredNoticeVisible && !modal;
+
+  useEffect(() => {
+    if (showTieredNotice && !tieredShownMarked) {
+      setTieredShownMarked(true);
+      markTieredPayoutNoticeShown().catch(() => {});
+    }
+  }, [showTieredNotice, tieredShownMarked]);
+
+  const dismissTieredNotice = () => setTieredNoticeVisible(false);
 
   if (loading) {
     return (
@@ -309,6 +325,12 @@ export default function DashboardScreen() {
 
       <NudgeModalView nudge={modal} onClose={closeModal} onCta={onCta} />
       <OnboardingModal />
+      <TieredPayoutNoticeModal
+        visible={showTieredNotice}
+        daysLeft={data?.tiered_payout_notice?.days_left}
+        graceEndDate={data?.tiered_payout_notice?.grace_end_date}
+        onClose={dismissTieredNotice}
+      />
     </View>
   );
 }
