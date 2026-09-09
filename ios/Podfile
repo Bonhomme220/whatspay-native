@@ -17,6 +17,10 @@ end
 target 'WhatspayNative' do
   config = use_native_modules!
 
+  # React Native Firebase — requiert des frameworks statiques
+  use_frameworks! :linkage => :static
+  $RNFirebaseAsStaticFramework = true
+
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.
@@ -30,5 +34,12 @@ target 'WhatspayNative' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Requis par React Native Firebase avec use_frameworks! :static
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |build_config|
+        build_config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      end
+    end
   end
 end
