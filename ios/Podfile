@@ -5,6 +5,10 @@ require Pod::Executable.execute_command('node', ['-p',
     {paths: [process.argv[1]]},
   )', __dir__]).strip
 
+# Workaround react-native-firebase + RN 0.84+ prebuilt RNCore (invertase/react-native-firebase#8883)
+ENV['RCT_USE_PREBUILT_RNCORE'] = '0'
+ENV['RCT_USE_RN_DEP'] = '0'
+
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
