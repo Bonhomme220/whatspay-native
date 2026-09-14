@@ -1,6 +1,7 @@
 import React, {useCallback, useState} from 'react';
 import {
   ActivityIndicator,
+  Linking,
   Share,
   ScrollView,
   StyleSheet,
@@ -14,6 +15,7 @@ import {useFocusEffect} from '@react-navigation/native';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {AppStackParamList} from '../navigation/RootNavigator';
 import {activateAmbassador, AmbassadorData, enterAmbassadorCode, fetchAmbassador} from '../api/ambassador';
+import {fetchKycState} from '../api/kyc';
 import {apiErrorMessage} from '../api/client';
 import Icon from '../components/Icon';
 import {font} from '../theme';
@@ -46,10 +48,15 @@ export default function AmbassadorScreen({navigation}: Props) {
   const [codeSuccess, setCodeSuccess] = useState<string | null>(null);
   const [activating, setActivating] = useState(false);
   const [activateError, setActivateError] = useState<string | null>(null);
+  const [kycVerifyUrl, setKycVerifyUrl] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      setData(await fetchAmbassador());
+      const d = await fetchAmbassador();
+      setData(d);
+      if (d.balance > 1000 && !d.kyc_verified) {
+        fetchKycState().then(k => setKycVerifyUrl(k.verify_url)).catch(() => {});
+      }
     } catch {
     } finally {
       setLoading(false);
@@ -185,17 +192,34 @@ export default function AmbassadorScreen({navigation}: Props) {
           </View>
 
           {/* Éligibilité */}
-          {!isAmb && (
-            <View style={[styles.eligBox, data.is_eligible ? styles.eligOk : styles.eligNo]}>
+          {!isAmb && (() => {
+            const thresholdReached = data.balance > 1000;
+            const needsKyc = thresholdReached && !data.kyc_verified;
+            const boxStyle = data.is_eligible ? styles.eligOk : needsKyc ? styles.eligWarn : styles.eligNo;
+            const iconColor = data.is_eligible ? GREEN : needsKyc ? '#d97706' : '#9ca3af';
+            const titleColor = data.is_eligible ? '#15803d' : needsKyc ? '#92400e' : '#4b5563';
+            const textColor = data.is_eligible ? '#16a34a' : needsKyc ? '#b45309' : '#6b7280';
+            return (
+            <View style={[styles.eligBox, boxStyle]}>
               <View style={styles.eligHead}>
-                <Icon name={data.is_eligible ? 'checkmark-circle' : 'warning-outline'} size={20} color={data.is_eligible ? GREEN : '#9ca3af'} />
-                <Text style={[styles.eligTitle, {color: data.is_eligible ? '#15803d' : '#4b5563'}]}>{data.is_eligible ? 'Vous êtes éligible au programme !' : 'Pas encore éligible'}</Text>
+                <Icon name={data.is_eligible ? 'checkmark-circle' : needsKyc ? 'alert-circle-outline' : 'warning-outline'} size={20} color={iconColor} />
+                <Text style={[styles.eligTitle, {color: titleColor}]}>
+                  {data.is_eligible ? 'Vous êtes éligible au programme !' : needsKyc ? 'Presque éligible — KYC requise' : 'Pas encore éligible'}
+                </Text>
               </View>
-              <Text style={[styles.eligText, {color: data.is_eligible ? '#16a34a' : '#6b7280'}]}>
+              <Text style={[styles.eligText, {color: textColor}]}>
                 {data.is_eligible
-                  ? 'Vous avez atteint 1 000 F de retraits validés. Générez votre code dès maintenant pour commencer à parrainer.'
-                  : 'Pour devenir ambassadeur, vous devez avoir effectué au moins 1 000 F de retraits validés sur WhatsPAY.'}
+                  ? 'Vous avez plus de 1 000 F sur votre portefeuille et une identité vérifiée. Générez votre code dès maintenant pour commencer à parrainer.'
+                  : needsKyc
+                  ? 'Vous avez atteint le seuil de 1 000 F — il ne vous manque plus que la vérification de votre identité (KYC) pour devenir éligible.'
+                  : 'Pour devenir ambassadeur, votre solde doit dépasser 1 000 F et votre identité (KYC) doit être vérifiée.'}
               </Text>
+              {needsKyc && kycVerifyUrl && (
+                <TouchableOpacity style={styles.kycBtn} onPress={() => Linking.openURL(kycVerifyUrl)}>
+                  <Icon name="shield-checkmark-outline" size={16} color="#fff" />
+                  <Text style={styles.genText}>Vérifier mon identité (KYC)</Text>
+                </TouchableOpacity>
+              )}
               {data.is_eligible && (
                 <>
                   {!!activateError && <Text style={styles.errorText}>{activateError}</Text>}
@@ -205,7 +229,8 @@ export default function AmbassadorScreen({navigation}: Props) {
                 </>
               )}
             </View>
-          )}
+            );
+          })()}
 
           {/* Filleuls */}
           {isAmb && (
@@ -268,11 +293,13 @@ const styles = StyleSheet.create({
   stepText: {flex: 1, color: '#4b5563', fontSize: font.size.sm, lineHeight: 20},
   eligBox: {borderRadius: 16, padding: 16, borderWidth: 1},
   eligOk: {backgroundColor: '#f0fdf4', borderColor: '#bbf7d0'},
+  eligWarn: {backgroundColor: '#fffbeb', borderColor: '#fde68a'},
   eligNo: {backgroundColor: '#f9fafb', borderColor: '#e5e7eb'},
   eligHead: {flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8},
   eligTitle: {fontSize: font.size.sm, fontWeight: font.weight.bold},
   eligText: {fontSize: font.size.xs, lineHeight: 18},
   genBtn: {flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: GREEN, borderRadius: 12, paddingVertical: 12, marginTop: 12},
+  kycBtn: {flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#d97706', borderRadius: 12, paddingVertical: 12, marginTop: 12},
   genText: {color: '#fff', fontSize: font.size.sm, fontWeight: font.weight.bold},
   emptyRef: {color: '#9ca3af', fontSize: font.size.sm, textAlign: 'center', paddingVertical: 16},
   refRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#f3f4f6'},

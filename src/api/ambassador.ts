@@ -12,6 +12,8 @@ export interface AmbassadorData {
   ambassador_code: string | null;
   gain_per_view: number;
   is_eligible: boolean;
+  balance: number;
+  kyc_verified: boolean;
   has_referrer: boolean;
   stat?: {active_referrals: number; total_referrals: number} | null;
   referrals: AmbassadorReferral[];

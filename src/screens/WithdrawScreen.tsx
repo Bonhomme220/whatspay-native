@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -16,6 +17,7 @@ import {colors, font, radius, spacing} from '../theme';
 import {Button, TextField} from '../components/ui';
 import {requestWithdraw, WithdrawMethod} from '../api/withdraw';
 import {apiErrorMessage} from '../api/client';
+import {fetchKycState} from '../api/kyc';
 import {money} from '../lib/status';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Withdraw'>;
@@ -69,8 +71,20 @@ export default function WithdrawScreen({route, navigation}: Props) {
       } else {
         Alert.alert('Retrait impossible', res.message ?? 'Réessaie plus tard.');
       }
-    } catch (e) {
-      Alert.alert('Erreur', apiErrorMessage(e));
+    } catch (e: any) {
+      const kycRequired = !!e?.response?.data?.kyc_required;
+      if (kycRequired) {
+        const kyc = await fetchKycState().catch(() => null);
+        Alert.alert(
+          'Vérification KYC requise',
+          apiErrorMessage(e),
+          kyc?.verify_url
+            ? [{text: 'Annuler', style: 'cancel'}, {text: 'Vérifier mon identité', onPress: () => Linking.openURL(kyc.verify_url!)}]
+            : [{text: 'OK'}],
+        );
+      } else {
+        Alert.alert('Erreur', apiErrorMessage(e));
+      }
     } finally {
       setBusy(false);
     }
