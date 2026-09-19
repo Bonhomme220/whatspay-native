@@ -36,6 +36,16 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
+
+        <!-- Android App Links : app.whatspay.africa ouvre directement l'appli (au lieu du
+             navigateur/PWA) une fois la vérification Digital Asset Links validée par le SHA-256
+             de assetlinks.json (voir whatspay-mobile/public/.well-known/assetlinks.json). -->
+        <intent-filter android:autoVerify="true">
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" android:host="app.whatspay.africa" />
+        </intent-filter>
       </activity>
     </application>
 </manifest>

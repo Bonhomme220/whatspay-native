@@ -29,6 +29,7 @@ import AppHeader from '../components/AppHeader';
 import LocationUpdateModal from '../components/LocationUpdateModal';
 import {DrawerProvider} from '../context/DrawerContext';
 import {navigationRef} from './navigationRef';
+import {linking} from './linking';
 import {colors} from '../theme';
 
 export type AuthStackParamList = {
@@ -105,7 +106,7 @@ export default function RootNavigator() {
   }
 
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer ref={navigationRef} linking={linking}>
       {token ? <AppNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
