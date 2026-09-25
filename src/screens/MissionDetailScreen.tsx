@@ -235,8 +235,8 @@ export default function MissionDetailScreen({route, navigation}: Props) {
             </View>
           )}
 
-          {/* Stats conversion */}
-          {t?.campaign_type === 'conversion' && !isAssigned && mission.tracking_stats && (
+          {/* Stats de tracking : dès qu'un lien de tracking existe, quelle que soit la nature de la campagne */}
+          {!isAssigned && mission.tracking_stats && (
             <Card title="VOS STATISTIQUES DE CONVERSION" icon="stats-chart-outline">
               <View style={styles.convGrid}>
                 {[
