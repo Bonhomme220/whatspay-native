@@ -179,6 +179,18 @@ export default function MissionDetailScreen({route, navigation}: Props) {
           </View>
           <Text style={styles.heroTitle}>{t?.name ?? '—'}</Text>
           <Text style={styles.heroSub}>Détails de la mission</Text>
+          {!isOnboarding && !isCivic && !!t?.campaign_type && (
+            <View style={{marginTop: 8}}>
+              <View style={[styles.typeBadge, t.campaign_type === 'conversion' ? styles.typeBadgeConversion : styles.typeBadgeNotoriete]}>
+                <Text style={styles.typeBadgeText}>{t.campaign_type === 'conversion' ? '🎯 Campagne conversion' : '📢 Campagne notoriété'}</Text>
+              </View>
+              <Text style={styles.typeBadgeDesc}>
+                {t.campaign_type === 'conversion'
+                  ? 'Tu es payé par vue ET selon le nombre de clics générés. Partage le visuel et la légende sur plusieurs canaux (statut, groupes...) pour maximiser tes clics.'
+                  : 'Tu es payé par vue uniquement. Publie simplement le visuel sur ton statut WhatsApp.'}
+              </Text>
+            </View>
+          )}
           <View style={styles.quick}>
             {[
               {label: 'Début', value: fmtDate(t?.startdate)},
@@ -445,6 +457,11 @@ const styles = StyleSheet.create({
   pillText: {fontSize: font.size.xs, fontWeight: font.weight.bold},
   heroTitle: {color: '#fff', fontSize: font.size.xl, fontWeight: font.weight.bold, lineHeight: 26},
   heroSub: {color: '#dcfce7', fontSize: font.size.xs, marginTop: 2},
+  typeBadge: {alignSelf: 'flex-start', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1},
+  typeBadgeNotoriete: {backgroundColor: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.25)'},
+  typeBadgeConversion: {backgroundColor: 'rgba(251,146,60,0.25)', borderColor: 'rgba(254,215,170,0.4)'},
+  typeBadgeText: {color: '#fff', fontSize: font.size.xs, fontWeight: font.weight.bold},
+  typeBadgeDesc: {color: '#dcfce7', fontSize: font.size.xs, marginTop: 6, lineHeight: 16, maxWidth: 280},
   quick: {flexDirection: 'row', gap: 12, marginTop: 16},
   quickItem: {flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.15)'},
   quickVal: {color: '#fff', fontWeight: font.weight.bold, fontSize: font.size.sm},
