@@ -102,16 +102,25 @@ export default function RegisterScreen({navigation}: Props) {
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [ambassadorCode, setAmbassadorCode] = useState('');
   const [ambassadorName, setAmbassadorName] = useState<string | null>(null);
+  // Distingue "vide" de "code invalide" — avant, les deux cas affichaient le même texte
+  // neutre, et un code mal saisi n'était détecté qu'à la toute fin de l'inscription
+  // (validation backend "exists" au submit, étape 4).
+  const [ambassadorStatus, setAmbassadorStatus] = useState<'idle' | 'checking' | 'found' | 'invalid'>('idle');
 
   // Nom du parrain (affiché sous le champ « Vous êtes invité par … »).
   useEffect(() => {
     const code = ambassadorCode.trim();
-    if (!code) { setAmbassadorName(null); return; }
+    if (!code) { setAmbassadorName(null); setAmbassadorStatus('idle'); return; }
+    setAmbassadorStatus('checking');
     let cancelled = false;
     const t = setTimeout(() => {
       fetchAmbassadorName(code)
-        .then(r => { if (!cancelled) setAmbassadorName(r.found ? r.name : null); })
-        .catch(() => { if (!cancelled) setAmbassadorName(null); });
+        .then(r => {
+          if (cancelled) return;
+          setAmbassadorName(r.found ? r.name : null);
+          setAmbassadorStatus(r.found ? 'found' : 'invalid');
+        })
+        .catch(() => { if (!cancelled) { setAmbassadorName(null); setAmbassadorStatus('idle'); } });
     }, 400);
     return () => { cancelled = true; clearTimeout(t); };
   }, [ambassadorCode]);
@@ -171,6 +180,8 @@ export default function RegisterScreen({navigation}: Props) {
       if (!firstname.trim() || !lastname.trim()) return 'Renseigne ton nom et prénom.';
       if (!/^\S+@\S+\.\S+$/.test(email)) return 'Adresse email invalide.';
       if (!/^\d{4}-\d{2}-\d{2}$/.test(birthdate)) return 'Choisis ta date de naissance.';
+      if (ambassadorStatus === 'invalid') return 'Code ambassadeur invalide. Corrige-le ou laisse le champ vide.';
+      if (ambassadorStatus === 'checking') return 'Vérification du code ambassadeur en cours…';
     }
     if (step === 1) {
       if (!countryId) return 'Choisis ton pays.';
@@ -287,10 +298,14 @@ export default function RegisterScreen({navigation}: Props) {
                   <TextField label="Adresse mail" value={email} onChangeText={setEmail} placeholder="votre@mail.com" autoCapitalize="none" keyboardType="email-address" />
                   <DateField label="Date de naissance" value={birthdate} onChange={setBirthdate} maximumDate={maxBirthdate} />
                   <TextField label="Code ambassadeur (facultatif)" value={ambassadorCode} onChangeText={t => setAmbassadorCode(t.toUpperCase())} placeholder="Ex : WTP-ABC123" autoCapitalize="characters" />
-                  {ambassadorName ? (
+                  {ambassadorStatus === 'found' ? (
                     <Text style={[styles.hint, {color: '#16a34a', fontWeight: font.weight.bold}]}>✓ Vous êtes invité par {ambassadorName}</Text>
+                  ) : ambassadorStatus === 'checking' ? (
+                    <Text style={styles.hint}>Vérification du code…</Text>
+                  ) : ambassadorStatus === 'invalid' ? (
+                    <Text style={[styles.hint, {color: '#dc2626', fontWeight: font.weight.bold}]}>✕ Code ambassadeur invalide. Corrige-le ou laisse le champ vide.</Text>
                   ) : (
-                    <Text style={styles.hint}>Un ambassadeur t'a invité ? Entre son code. Sinon laisse vide.</Text>
+                    <Text style={styles.hint}>Un ambassadeur t'a invité ? Entre son code. Ce champ reste libre si tu n'en as pas — laisse-le simplement vide.</Text>
                   )}
                 </>
               )}
