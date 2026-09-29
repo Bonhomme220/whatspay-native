@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -62,6 +62,19 @@ function fmtDate(d?: string | null, withTime = false) {
 const isVideo = (f?: string, mt?: string) => mt === 'video' || (!!f && /\.(mp4|mov|webm|avi|mkv)(\?|$)/i.test(f));
 const isImage = (f?: string, mt?: string) => mt === 'image' || (!!f && /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(f));
 
+// Délai minimum entre l'acceptation d'une mission et la soumission de la preuve — doit
+// rester identique à SUBMIT_WAIT_HOURS côté PWA (campagnes/[id]/page.tsx) et backend
+// (AssignmentService::submitResult, la vraie barrière).
+const SUBMIT_WAIT_HOURS = 20;
+
+function fmtCountdown(ms: number): string {
+  const totalMinutes = Math.max(0, Math.ceil(ms / 60000));
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h <= 0) return `${m} min`;
+  return `${h} h ${m.toString().padStart(2, '0')} min`;
+}
+
 function Card({title, icon, children}: {title?: string; icon?: string; children: React.ReactNode}) {
   return (
     <View style={styles.card}>
@@ -83,6 +96,12 @@ export default function MissionDetailScreen({route, navigation}: Props) {
   const [accepting, setAccepting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [legendCopied, setLegendCopied] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(t);
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -139,6 +158,12 @@ export default function MissionDetailScreen({route, navigation}: Props) {
   const isOnboarding = !!t?.is_onboarding;
   const link = mission.tracking_url ?? t?.url ?? '';
   const msgColor = MSG_COLOR[st] ?? {bg: '#f9fafb', bd: '#f3f4f6', fg: '#374151'};
+
+  // "Soumettre ma preuve" ne devient cliquable que 20h après l'acceptation.
+  const acceptedAtMs = mission.response_date ? new Date(mission.response_date).getTime() : null;
+  const submitUnlockMs = acceptedAtMs !== null ? acceptedAtMs + SUBMIT_WAIT_HOURS * 3_600_000 : null;
+  const submitRemainingMs = submitUnlockMs !== null ? submitUnlockMs - now : 0;
+  const canSubmitProof = submitUnlockMs === null || submitRemainingMs <= 0;
 
   return (
     <View style={styles.screen}>
@@ -383,9 +408,20 @@ export default function MissionDetailScreen({route, navigation}: Props) {
         </View>
       ) : isPending ? (
         <View style={styles.ctaWrap}>
-          <TouchableOpacity style={styles.ctaGreen} onPress={() => navigation.navigate('SubmitProof', {id: mission.id})} activeOpacity={0.85}>
-            <Text style={styles.ctaText}>Soumettre ma preuve</Text>
-          </TouchableOpacity>
+          {canSubmitProof ? (
+            <TouchableOpacity style={styles.ctaGreen} onPress={() => navigation.navigate('SubmitProof', {id: mission.id})} activeOpacity={0.85}>
+              <Text style={styles.ctaText}>Soumettre ma preuve</Text>
+            </TouchableOpacity>
+          ) : (
+            <>
+              <View style={[styles.ctaGreen, styles.ctaGreenDisabled]}>
+                <Text style={styles.ctaText}>Soumettre ma preuve</Text>
+              </View>
+              <Text style={styles.ctaCountdown}>
+                Disponible dans {fmtCountdown(submitRemainingMs)} — laisse le temps à ton statut d'être vu.
+              </Text>
+            </>
+          )}
         </View>
       ) : isSubmited ? (
         <View style={styles.ctaWrap}>
@@ -478,7 +514,9 @@ const styles = StyleSheet.create({
   mediaGreenText: {color: '#fff', fontSize: font.size.xs, fontWeight: font.weight.bold},
   ctaWrap: {position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, paddingBottom: 16, paddingTop: 8, backgroundColor: 'transparent'},
   ctaGreen: {backgroundColor: GREEN, borderRadius: 16, paddingVertical: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 8, elevation: 4},
+  ctaGreenDisabled: {backgroundColor: 'rgba(22,163,74,0.4)', shadowOpacity: 0, elevation: 0},
   ctaText: {color: '#fff', fontSize: font.size.sm, fontWeight: font.weight.bold},
+  ctaCountdown: {textAlign: 'center', color: '#6b7280', fontSize: font.size.xs, marginTop: 6},
   ctaDone: {backgroundColor: GREEN, borderRadius: 16, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8},
   ctaDoneText: {color: '#fff', fontSize: font.size.sm, fontWeight: font.weight.bold},
 });

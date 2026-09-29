@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -22,6 +22,10 @@ import {font} from '../theme';
 type Props = NativeStackScreenProps<AppStackParamList, 'SubmitProof'>;
 
 const GREEN = '#16a34a';
+// Doit rester identique à SUBMIT_WAIT_HOURS dans MissionDetailScreen.tsx et backend
+// (AssignmentService::submitResult, la vraie barrière — ce garde n'est qu'une UX qui évite
+// de remplir un formulaire pour rien en cas d'accès direct à cet écran).
+const SUBMIT_WAIT_HOURS = 20;
 const RULES = [
   'Image claire et non floue',
   'Le contenu diffusé entièrement visible',
@@ -55,6 +59,17 @@ export default function SubmitProofScreen({route, navigation}: Props) {
   }, [id]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  // Accès direct à cet écran avant les 20h d'attente (bouton normalement désactivé sur la
+  // fiche mission) → on renvoie plutôt que de laisser remplir un formulaire qui sera de
+  // toute façon rejeté par le backend.
+  useEffect(() => {
+    if (!mission || mission.status !== 'PENDING' || !mission.response_date) return;
+    const unlockAt = new Date(mission.response_date).getTime() + SUBMIT_WAIT_HOURS * 3_600_000;
+    if (Date.now() < unlockAt) {
+      navigation.replace('MissionDetail', {id});
+    }
+  }, [mission, id, navigation]);
 
   const pick = async () => {
     const res = await launchImageLibrary({mediaType: 'photo', quality: 0.8});
