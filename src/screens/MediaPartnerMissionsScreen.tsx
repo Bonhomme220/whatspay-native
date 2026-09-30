@@ -21,7 +21,6 @@ import {
 } from '../api/mediaPartnerMissions';
 import {fetchMediaPartnerProfile, MediaPartnerProfile} from '../api/mediaPartnerProfile';
 import {apiErrorMessage} from '../api/client';
-import {useAuth} from '../context/AuthContext';
 import Icon from '../components/Icon';
 import {font, spacing} from '../theme';
 
@@ -95,8 +94,11 @@ function MediaThumb({m}: {m: MediaPartnerMission}) {
   );
 }
 
-/** Bannière persistante incitant à soumettre la recapture mensuelle (chiffres + captures de la chaîne). */
-function RecaptureBanner({profile, onPress}: {profile: MediaPartnerProfile; onPress: () => void}) {
+/**
+ * Bannière persistante incitant à soumettre la recapture mensuelle (chiffres + captures de la chaîne).
+ * Exportée pour être réutilisée telle quelle par MediaPartnerDashboardScreen (même logique d'urgence).
+ */
+export function RecaptureBanner({profile, onPress}: {profile: Pick<MediaPartnerProfile, 'status' | 'recapture_window_open'>; onPress: () => void}) {
   const isRestricted = profile.status === 'inactif' || profile.status === 'off';
   const urgent = isRestricted || profile.recapture_window_open;
   return (
@@ -137,7 +139,6 @@ function Empty({text}: {text: string}) {
 
 export default function MediaPartnerMissionsScreen() {
   const navigation = useNavigation<Nav>();
-  const {signOut} = useAuth();
   const [data, setData] = useState<MediaPartnerMissionsResponse | null>(null);
   const [profile, setProfile] = useState<MediaPartnerProfile | null>(null);
   const [tab, setTab] = useState<TabKey>('disponibles');
@@ -201,14 +202,13 @@ export default function MediaPartnerMissionsScreen() {
               <Text style={styles.heroSub}>Chaîne partenaire WhatsPAY</Text>
             </View>
             <View style={styles.heroBtns}>
+              {/* Déconnexion déplacée vers l'onglet Profil (évite un bouton dupliqué et source de confusion
+                  maintenant que la navigation par onglets donne accès au Profil partout). */}
               <TouchableOpacity
                 style={styles.logoutBtn}
                 onPress={() => navigation.navigate('MediaPartnerRecapture')}
                 hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
                 <Icon name="document-text-outline" size={20} color="#fff" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.logoutBtn} onPress={signOut} hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-                <Icon name="log-out-outline" size={20} color="#fff" />
               </TouchableOpacity>
             </View>
           </View>
