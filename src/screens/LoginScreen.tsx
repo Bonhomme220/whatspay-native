@@ -145,7 +145,7 @@ export default function LoginScreen({navigation}: Props) {
               {/* Inscription */}
               <View style={styles.footer}>
                 <Text style={styles.footerText}>Pas inscrit(e)? </Text>
-                <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                <TouchableOpacity onPress={() => navigation.navigate('RegisterChoice')}>
                   <Text style={styles.footerLink}>Inscrivez vous</Text>
                 </TouchableOpacity>
               </View>

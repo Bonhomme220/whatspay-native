@@ -6,6 +6,8 @@ import {useAuth} from '../context/AuthContext';
 import SplashScreen from '../screens/SplashScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import RegisterChoiceScreen from '../screens/RegisterChoiceScreen';
+import RegisterMediaPartnerScreen from '../screens/RegisterMediaPartnerScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/ResetPasswordScreen';
 import ReactivationScreen from '../screens/ReactivationScreen';
@@ -34,7 +36,9 @@ import {colors} from '../theme';
 
 export type AuthStackParamList = {
   Login: undefined;
+  RegisterChoice: undefined;
   Register: undefined;
+  RegisterMediaPartner: undefined;
   ForgotPassword: undefined;
   ResetPassword: {token: string; name?: string} | undefined;
   Reactivation: {email?: string} | undefined;
@@ -64,7 +68,9 @@ function AuthNavigator() {
   return (
     <AuthStack.Navigator screenOptions={{headerShown: false, contentStyle: {backgroundColor: colors.bg}}}>
       <AuthStack.Screen name="Login" component={LoginScreen} />
+      <AuthStack.Screen name="RegisterChoice" component={RegisterChoiceScreen} />
       <AuthStack.Screen name="Register" component={RegisterScreen} />
+      <AuthStack.Screen name="RegisterMediaPartner" component={RegisterMediaPartnerScreen} />
       <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <AuthStack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <AuthStack.Screen name="Reactivation" component={ReactivationScreen} />

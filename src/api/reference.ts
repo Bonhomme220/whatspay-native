@@ -33,3 +33,18 @@ export const fetchContentTypes = () => getList('/contenttypes');
 export const fetchLangs = () => getList('/langs');
 export const fetchStudies = () => getList('/studies');
 export const fetchOccupations = () => getList('/occupations');
+
+/** Catégories de chaîne WhatsApp (inscription Partenaire Média). */
+export const fetchChannelCategories = () => getList('/channel-categories');
+
+export interface PaymentMethodRef extends Ref {
+  code: string;
+}
+
+/** Moyens de paiement disponibles (inscription Partenaire Média). */
+export const fetchPaymentMethods = async (): Promise<PaymentMethodRef[]> => {
+  const {data} = await api.get<any>('/payment-methods');
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+  return [];
+};

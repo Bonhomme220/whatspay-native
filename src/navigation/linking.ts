@@ -22,7 +22,9 @@ export const linking: LinkingOptions<any> = {
     screens: {
       // Auth
       Login: 'login',
+      RegisterChoice: 'register-choice',
       Register: 'register',
+      RegisterMediaPartner: 'register/partenaire-media',
       ForgotPassword: 'forgot-password',
       ResetPassword: 'reset-password',
       Reactivation: 'reactivation',
