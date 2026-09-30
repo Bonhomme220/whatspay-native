@@ -19,6 +19,7 @@ import {
   MediaPartnerMission,
   MediaPartnerMissionsResponse,
 } from '../api/mediaPartnerMissions';
+import {fetchMediaPartnerProfile, MediaPartnerProfile} from '../api/mediaPartnerProfile';
 import {apiErrorMessage} from '../api/client';
 import {useAuth} from '../context/AuthContext';
 import Icon from '../components/Icon';
@@ -94,6 +95,37 @@ function MediaThumb({m}: {m: MediaPartnerMission}) {
   );
 }
 
+/** Bannière persistante incitant à soumettre la recapture mensuelle (chiffres + captures de la chaîne). */
+function RecaptureBanner({profile, onPress}: {profile: MediaPartnerProfile; onPress: () => void}) {
+  const isRestricted = profile.status === 'inactif' || profile.status === 'off';
+  const urgent = isRestricted || profile.recapture_window_open;
+  return (
+    <TouchableOpacity
+      style={[styles.recaptureBanner, urgent && styles.recaptureBannerUrgent]}
+      onPress={onPress}
+      activeOpacity={0.85}>
+      <Icon
+        name={isRestricted ? 'alert-circle-outline' : 'clipboard-outline'}
+        size={20}
+        color={urgent ? '#b91c1c' : '#1d4ed8'}
+      />
+      <View style={{flex: 1, marginLeft: 10}}>
+        <Text style={[styles.recaptureBannerTitle, urgent && {color: '#b91c1c'}]}>
+          {isRestricted
+            ? `Compte ${profile.status === 'off' ? 'désactivé' : 'inactif'} — mettez à jour vos chiffres`
+            : '📋 Mettez à jour les chiffres de votre chaîne'}
+        </Text>
+        <Text style={[styles.recaptureBannerSub, urgent && {color: '#b91c1c'}]}>
+          {isRestricted
+            ? 'Une recapture validée réactive votre compte automatiquement.'
+            : 'Recapture mensuelle à soumettre (chiffres + captures).'}
+        </Text>
+      </View>
+      <Icon name="chevron-forward" size={18} color={urgent ? '#b91c1c' : '#1d4ed8'} />
+    </TouchableOpacity>
+  );
+}
+
 function Empty({text}: {text: string}) {
   return (
     <View style={styles.empty}>
@@ -107,6 +139,7 @@ export default function MediaPartnerMissionsScreen() {
   const navigation = useNavigation<Nav>();
   const {signOut} = useAuth();
   const [data, setData] = useState<MediaPartnerMissionsResponse | null>(null);
+  const [profile, setProfile] = useState<MediaPartnerProfile | null>(null);
   const [tab, setTab] = useState<TabKey>('disponibles');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -125,7 +158,15 @@ export default function MediaPartnerMissionsScreen() {
     }
   }, []);
 
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  // Appel léger, indépendant de `load` : sert uniquement à afficher la bannière de recapture.
+  // Échec silencieux — ne doit jamais bloquer l'écran missions.
+  const loadProfile = useCallback(async () => {
+    try {
+      setProfile(await fetchMediaPartnerProfile());
+    } catch {}
+  }, []);
+
+  useFocusEffect(useCallback(() => { load(); loadProfile(); }, [load, loadProfile]));
 
   const accept = async (id: string) => {
     setAccepting(id);
@@ -159,9 +200,17 @@ export default function MediaPartnerMissionsScreen() {
               <Text style={styles.heroTitle}>Mes Missions</Text>
               <Text style={styles.heroSub}>Chaîne partenaire WhatsPAY</Text>
             </View>
-            <TouchableOpacity style={styles.logoutBtn} onPress={signOut} hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-              <Icon name="log-out-outline" size={20} color="#fff" />
-            </TouchableOpacity>
+            <View style={styles.heroBtns}>
+              <TouchableOpacity
+                style={styles.logoutBtn}
+                onPress={() => navigation.navigate('MediaPartnerRecapture')}
+                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                <Icon name="document-text-outline" size={20} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.logoutBtn} onPress={signOut} hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                <Icon name="log-out-outline" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.cumulCard}>
@@ -197,6 +246,9 @@ export default function MediaPartnerMissionsScreen() {
 
         {/* Content */}
         <View style={{paddingHorizontal: 16, paddingTop: 16}}>
+          {!!profile?.recapture_needed && (
+            <RecaptureBanner profile={profile} onPress={() => navigation.navigate('MediaPartnerRecapture')} />
+          )}
           {loading ? (
             <View style={styles.loader}><ActivityIndicator color={GREEN} size="large" /></View>
           ) : error ? (
@@ -315,6 +367,7 @@ const styles = StyleSheet.create({
   heroTop: {flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between'},
   heroTitle: {color: '#fff', fontSize: 24, fontWeight: font.weight.bold},
   heroSub: {color: '#dcfce7', fontSize: font.size.sm, marginTop: 2},
+  heroBtns: {flexDirection: 'row', gap: 8},
   logoutBtn: {width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center'},
   cumulCard: {backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 16, padding: 14, marginTop: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'},
   cumulLabel: {color: '#dcfce7', fontSize: font.size.xs},
@@ -332,6 +385,10 @@ const styles = StyleSheet.create({
   loader: {paddingVertical: 60, alignItems: 'center'},
   infoBox: {flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#eff6ff', borderWidth: 1, borderColor: '#dbeafe', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 12},
   infoText: {flex: 1, color: '#1d4ed8', fontSize: font.size.xs},
+  recaptureBanner: {flexDirection: 'row', alignItems: 'center', backgroundColor: '#eff6ff', borderWidth: 1, borderColor: '#dbeafe', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 14},
+  recaptureBannerUrgent: {backgroundColor: '#fef2f2', borderColor: '#fecaca'},
+  recaptureBannerTitle: {color: '#1d4ed8', fontSize: font.size.sm, fontWeight: font.weight.bold},
+  recaptureBannerSub: {color: '#3b82f6', fontSize: font.size.xs, marginTop: 2},
   card: {backgroundColor: '#fff', borderRadius: 16, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: '#f3f4f6', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 1},
   cardRow: {flexDirection: 'row', alignItems: 'flex-start'},
   thumb: {width: 52, height: 52, borderRadius: 10, backgroundColor: '#f3f4f6'},

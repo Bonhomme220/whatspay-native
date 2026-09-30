@@ -2,6 +2,7 @@ import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import MediaPartnerMissionsScreen from '../screens/MediaPartnerMissionsScreen';
 import MediaPartnerMissionDetailScreen from '../screens/MediaPartnerMissionDetailScreen';
+import MediaPartnerRecaptureScreen from '../screens/MediaPartnerRecaptureScreen';
 import {colors} from '../theme';
 
 /**
@@ -14,6 +15,7 @@ import {colors} from '../theme';
 export type MediaPartnerStackParamList = {
   MediaPartnerMissions: undefined;
   MediaPartnerMissionDetail: {id: string};
+  MediaPartnerRecapture: undefined;
 };
 
 const Stack = createNativeStackNavigator<MediaPartnerStackParamList>();
@@ -25,6 +27,7 @@ export default function MediaPartnerNavigator() {
       screenOptions={{headerShown: false, contentStyle: {backgroundColor: colors.bg}}}>
       <Stack.Screen name="MediaPartnerMissions" component={MediaPartnerMissionsScreen} />
       <Stack.Screen name="MediaPartnerMissionDetail" component={MediaPartnerMissionDetailScreen} />
+      <Stack.Screen name="MediaPartnerRecapture" component={MediaPartnerRecaptureScreen} />
     </Stack.Navigator>
   );
 }
