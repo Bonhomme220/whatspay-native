@@ -9,7 +9,7 @@ export interface AuthUser {
 
 export interface LoginResult {
   token: string;
-  profil: 'DIFFUSEUR' | 'ANNONCEUR';
+  profil: 'DIFFUSEUR' | 'ANNONCEUR' | 'PARTENAIRE_MEDIA';
   user: AuthUser;
 }
 

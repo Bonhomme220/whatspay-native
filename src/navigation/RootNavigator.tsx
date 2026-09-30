@@ -25,6 +25,7 @@ import ComplaintsScreen from '../screens/ComplaintsScreen';
 import NewComplaintScreen from '../screens/NewComplaintScreen';
 import FaqScreen from '../screens/FaqScreen';
 import MainTabs from './MainTabs';
+import MediaPartnerNavigator from './MediaPartnerNavigator';
 import PushBootstrap from './PushBootstrap';
 import AppDrawer from '../components/AppDrawer';
 import AppHeader from '../components/AppHeader';
@@ -105,7 +106,7 @@ function AppNavigator() {
 }
 
 export default function RootNavigator() {
-  const {ready, token} = useAuth();
+  const {ready, token, profil} = useAuth();
 
   if (!ready) {
     return <SplashScreen />;
@@ -113,7 +114,13 @@ export default function RootNavigator() {
 
   return (
     <NavigationContainer ref={navigationRef} linking={linking}>
-      {token ? <AppNavigator /> : <AuthNavigator />}
+      {!token ? (
+        <AuthNavigator />
+      ) : profil === 'PARTENAIRE_MEDIA' ? (
+        <MediaPartnerNavigator />
+      ) : (
+        <AppNavigator />
+      )}
     </NavigationContainer>
   );
 }

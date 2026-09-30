@@ -4,7 +4,7 @@ import {STORAGE_KEYS} from '../config';
 import {setUnauthorizedHandler} from '../api/client';
 import {AuthUser, login as apiLogin, logout as apiLogout, LoginResult} from '../api/auth';
 
-type Profil = 'DIFFUSEUR' | 'ANNONCEUR' | null;
+type Profil = 'DIFFUSEUR' | 'ANNONCEUR' | 'PARTENAIRE_MEDIA' | null;
 
 interface AuthState {
   ready: boolean; // bootstrap terminé (lecture du stockage)
