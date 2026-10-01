@@ -25,7 +25,7 @@ const GREEN = '#16a34a';
 // Doit rester identique à SUBMIT_WAIT_HOURS dans MissionDetailScreen.tsx et backend
 // (AssignmentService::submitResult, la vraie barrière — ce garde n'est qu'une UX qui évite
 // de remplir un formulaire pour rien en cas d'accès direct à cet écran).
-const SUBMIT_WAIT_HOURS = 20;
+const SUBMIT_WAIT_HOURS = 12;
 const RULES = [
   'Image claire et non floue',
   'Le contenu diffusé entièrement visible',
@@ -60,7 +60,7 @@ export default function SubmitProofScreen({route, navigation}: Props) {
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  // Accès direct à cet écran avant les 20h d'attente (bouton normalement désactivé sur la
+  // Accès direct à cet écran avant les 12h d'attente (bouton normalement désactivé sur la
   // fiche mission) → on renvoie plutôt que de laisser remplir un formulaire qui sera de
   // toute façon rejeté par le backend.
   useEffect(() => {

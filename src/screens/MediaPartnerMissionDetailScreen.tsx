@@ -23,6 +23,7 @@ import {
   submitMediaPartnerMission,
 } from '../api/mediaPartnerMissions';
 import {apiErrorMessage} from '../api/client';
+import {downloadMediaToDevice} from '../lib/downloadMedia';
 import Icon from '../components/Icon';
 import {font} from '../theme';
 
@@ -330,7 +331,7 @@ export default function MediaPartnerMissionDetailScreen({route, navigation}: Pro
                 </View>
               )}
               {!!t.files && (
-                <TouchableOpacity style={styles.mediaGreen} onPress={() => Linking.openURL(t.files!)}>
+                <TouchableOpacity style={styles.mediaGreen} onPress={() => downloadMediaToDevice(t.files!, t.media_type)}>
                   <Icon name="download-outline" size={16} color="#fff" />
                   <Text style={styles.mediaGreenText}>Télécharger le média</Text>
                 </TouchableOpacity>

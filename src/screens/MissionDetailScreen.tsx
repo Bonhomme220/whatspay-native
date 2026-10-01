@@ -16,6 +16,7 @@ import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {AppStackParamList} from '../navigation/RootNavigator';
 import {acceptMission, fetchMission, Mission} from '../api/missions';
 import {apiErrorMessage} from '../api/client';
+import {downloadMediaToDevice} from '../lib/downloadMedia';
 import Icon from '../components/Icon';
 import {font} from '../theme';
 
@@ -65,7 +66,7 @@ const isImage = (f?: string, mt?: string) => mt === 'image' || (!!f && /\.(jpg|j
 // Délai minimum entre l'acceptation d'une mission et la soumission de la preuve — doit
 // rester identique à SUBMIT_WAIT_HOURS côté PWA (campagnes/[id]/page.tsx) et backend
 // (AssignmentService::submitResult, la vraie barrière).
-const SUBMIT_WAIT_HOURS = 20;
+const SUBMIT_WAIT_HOURS = 12;
 
 function fmtCountdown(ms: number): string {
   const totalMinutes = Math.max(0, Math.ceil(ms / 60000));
@@ -159,7 +160,7 @@ export default function MissionDetailScreen({route, navigation}: Props) {
   const link = mission.tracking_url ?? t?.url ?? '';
   const msgColor = MSG_COLOR[st] ?? {bg: '#f9fafb', bd: '#f3f4f6', fg: '#374151'};
 
-  // "Soumettre ma preuve" ne devient cliquable que 20h après l'acceptation.
+  // "Soumettre ma preuve" ne devient cliquable que 12h après l'acceptation.
   const acceptedAtMs = mission.response_date ? new Date(mission.response_date).getTime() : null;
   const submitUnlockMs = acceptedAtMs !== null ? acceptedAtMs + SUBMIT_WAIT_HOURS * 3_600_000 : null;
   const submitRemainingMs = submitUnlockMs !== null ? submitUnlockMs - now : 0;
@@ -394,7 +395,7 @@ export default function MissionDetailScreen({route, navigation}: Props) {
                   <Icon name="eye-outline" size={16} color="#4b5563" />
                   <Text style={styles.mediaOutlineText}>Aperçu</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.mediaGreen} onPress={() => Linking.openURL(t.files!)}>
+                <TouchableOpacity style={styles.mediaGreen} onPress={() => downloadMediaToDevice(t.files!, t.media_type)}>
                   <Icon name="download-outline" size={16} color="#fff" />
                   <Text style={styles.mediaGreenText}>Télécharger</Text>
                 </TouchableOpacity>

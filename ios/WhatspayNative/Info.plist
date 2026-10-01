@@ -35,6 +35,8 @@
 	</dict>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>WhatsPAY a besoin d'accéder à vos photos pour vous permettre de soumettre vos captures d'écran de Status WhatsApp comme preuves de mission.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>WhatsPAY a besoin d'enregistrer les visuels de campagne dans votre galerie pour que vous puissiez les publier.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIAppFonts</key>
