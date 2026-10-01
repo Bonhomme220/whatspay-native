@@ -18,12 +18,14 @@ import {activateAmbassador, AmbassadorData, enterAmbassadorCode, fetchAmbassador
 import {fetchKycState} from '../api/kyc';
 import {apiErrorMessage} from '../api/client';
 import Icon from '../components/Icon';
+import Pagination from '../components/Pagination';
 import {font} from '../theme';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Ambassador'>;
 
 const GREEN = '#16a34a';
 const YELLOW = '#eab308';
+const PAGE_SIZE = 10;
 
 function fmtDate(d?: string) {
   if (!d) return '—';
@@ -49,6 +51,8 @@ export default function AmbassadorScreen({navigation}: Props) {
   const [activating, setActivating] = useState(false);
   const [activateError, setActivateError] = useState<string | null>(null);
   const [kycVerifyUrl, setKycVerifyUrl] = useState<string | null>(null);
+  const [refSearch, setRefSearch] = useState('');
+  const [refPage, setRefPage] = useState(1);
 
   const load = useCallback(async () => {
     try {
@@ -233,27 +237,52 @@ export default function AmbassadorScreen({navigation}: Props) {
           })()}
 
           {/* Filleuls */}
-          {isAmb && (
-            <View style={styles.card}>
-              <Text style={styles.overline}>Mes filleuls ({data.referrals.length})</Text>
-              {data.referrals.length === 0 ? (
-                <Text style={styles.emptyRef}>Aucun filleul pour l'instant.</Text>
-              ) : (
-                data.referrals.map(r => (
-                  <View key={r.id} style={styles.refRow}>
-                    <View>
-                      <Text style={styles.refName}>{r.name}</Text>
-                      <Text style={styles.refDate}>Inscrit le {fmtDate(r.joined_at)}</Text>
-                    </View>
-                    <View style={{alignItems: 'flex-end'}}>
-                      <Text style={styles.refMissions}>{r.missions ?? 0}</Text>
-                      <Text style={styles.refDate}>missions</Text>
-                    </View>
+          {isAmb && (() => {
+            const q = refSearch.trim().toLowerCase();
+            const filteredRefs = q ? data.referrals.filter(r => r.name.toLowerCase().includes(q)) : data.referrals;
+            const pageRefs = filteredRefs.slice((refPage - 1) * PAGE_SIZE, refPage * PAGE_SIZE);
+            return (
+              <View style={styles.card}>
+                <Text style={styles.overline}>Mes filleuls ({data.referrals.length})</Text>
+                {data.referrals.length > 0 && (
+                  <View style={styles.refSearchRow}>
+                    <Icon name="search-outline" size={16} color="#9ca3af" />
+                    <TextInput
+                      style={styles.refSearchInput}
+                      value={refSearch}
+                      onChangeText={t => {setRefSearch(t); setRefPage(1);}}
+                      placeholder="Rechercher un filleul…"
+                      placeholderTextColor="#9ca3af"
+                    />
+                    {!!refSearch && (
+                      <TouchableOpacity onPress={() => {setRefSearch(''); setRefPage(1);}}>
+                        <Icon name="close-circle" size={16} color="#9ca3af" />
+                      </TouchableOpacity>
+                    )}
                   </View>
-                ))
-              )}
-            </View>
-          )}
+                )}
+                {filteredRefs.length === 0 ? (
+                  <Text style={styles.emptyRef}>{data.referrals.length === 0 ? "Aucun filleul pour l'instant." : 'Aucun filleul ne correspond à cette recherche.'}</Text>
+                ) : (
+                  <>
+                    {pageRefs.map(r => (
+                      <View key={r.id} style={styles.refRow}>
+                        <View>
+                          <Text style={styles.refName}>{r.name}</Text>
+                          <Text style={styles.refDate}>Inscrit le {fmtDate(r.joined_at)}</Text>
+                        </View>
+                        <View style={{alignItems: 'flex-end'}}>
+                          <Text style={styles.refMissions}>{r.missions ?? 0}</Text>
+                          <Text style={styles.refDate}>missions</Text>
+                        </View>
+                      </View>
+                    ))}
+                    <Pagination page={refPage} totalItems={filteredRefs.length} onChange={setRefPage} />
+                  </>
+                )}
+              </View>
+            );
+          })()}
         </View>
       </ScrollView>
     </View>
@@ -302,6 +331,8 @@ const styles = StyleSheet.create({
   kycBtn: {flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#d97706', borderRadius: 12, paddingVertical: 12, marginTop: 12},
   genText: {color: '#fff', fontSize: font.size.sm, fontWeight: font.weight.bold},
   emptyRef: {color: '#9ca3af', fontSize: font.size.sm, textAlign: 'center', paddingVertical: 16},
+  refSearchRow: {flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, paddingHorizontal: 12, height: 42, marginBottom: 8},
+  refSearchInput: {flex: 1, color: '#1f2937', fontSize: font.size.sm, padding: 0},
   refRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#f3f4f6'},
   refName: {color: '#374151', fontSize: font.size.sm, fontWeight: font.weight.medium},
   refDate: {color: '#9ca3af', fontSize: 10},

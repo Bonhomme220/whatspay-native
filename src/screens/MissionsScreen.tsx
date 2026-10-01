@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -15,7 +16,19 @@ import type {AppStackParamList} from '../navigation/RootNavigator';
 import {acceptMission, fetchMissions, Mission, MissionsResponse} from '../api/missions';
 import {apiErrorMessage} from '../api/client';
 import Icon from '../components/Icon';
+import Pagination from '../components/Pagination';
+import {DateField} from '../components/DateField';
 import {font, spacing} from '../theme';
+
+const PAGE_SIZE = 10;
+type TermStatus = 'tous' | 'SUBMITED' | 'SUBMISSION_ACCEPTED' | 'SUBMISSION_REJECTED' | 'EXPIRED';
+const TERM_STATUS_OPTIONS: {key: TermStatus; label: string}[] = [
+  {key: 'tous', label: 'Tous'},
+  {key: 'SUBMISSION_ACCEPTED', label: 'Terminée'},
+  {key: 'SUBMITED', label: 'Soumise'},
+  {key: 'SUBMISSION_REJECTED', label: 'Rejetée'},
+  {key: 'EXPIRED', label: 'Expirée'},
+];
 
 type Nav = NativeStackNavigationProp<AppStackParamList>;
 type TabKey = 'disponibles' | 'en_cours' | 'terminees';
@@ -86,6 +99,15 @@ export default function MissionsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [accepting, setAccepting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState<Record<TabKey, number>>({disponibles: 1, en_cours: 1, terminees: 1});
+
+  // Filtres de l'onglet "Terminées" uniquement (statut, période, recherche par nom de campagne).
+  const [termStatus, setTermStatus] = useState<TermStatus>('tous');
+  const [termFrom, setTermFrom] = useState<string | undefined>();
+  const [termTo, setTermTo] = useState<string | undefined>();
+  const [termSearch, setTermSearch] = useState('');
+
+  const setTabPage = (p: number) => setPage(prev => ({...prev, [tab]: p}));
 
   const load = useCallback(async () => {
     setError(null);
@@ -118,6 +140,34 @@ export default function MissionsScreen() {
     disponibles: data?.disponibles.length ?? 0,
     en_cours: data?.en_cours.length ?? 0,
     terminees: data?.terminees.length ?? 0,
+  };
+
+  const filteredTerminees = useMemo(() => {
+    const list = data?.terminees ?? [];
+    const q = termSearch.trim().toLowerCase();
+    const from = termFrom ? new Date(termFrom).getTime() : null;
+    const to = termTo ? new Date(termTo).getTime() + 86_400_000 - 1 : null; // fin de journée incluse
+    return list.filter(m => {
+      if (termStatus !== 'tous' && m.status !== termStatus) return false;
+      if (q && !(m.task?.name ?? '').toLowerCase().includes(q)) return false;
+      if (from !== null || to !== null) {
+        const d = m.submission_date ?? m.response_date ?? m.assignment_date;
+        const t = d ? new Date(d).getTime() : null;
+        if (t === null) return false;
+        if (from !== null && t < from) return false;
+        if (to !== null && t > to) return false;
+      }
+      return true;
+    });
+  }, [data?.terminees, termStatus, termFrom, termTo, termSearch]);
+
+  const pageDisponibles = (data?.disponibles ?? []).slice((page.disponibles - 1) * PAGE_SIZE, page.disponibles * PAGE_SIZE);
+  const pageEnCours = (data?.en_cours ?? []).slice((page.en_cours - 1) * PAGE_SIZE, page.en_cours * PAGE_SIZE);
+  const pageTerminees = filteredTerminees.slice((page.terminees - 1) * PAGE_SIZE, page.terminees * PAGE_SIZE);
+
+  const resetTermFilters = () => {
+    setTermStatus('tous'); setTermFrom(undefined); setTermTo(undefined); setTermSearch('');
+    setPage(prev => ({...prev, terminees: 1}));
   };
 
   return (
@@ -176,17 +226,19 @@ export default function MissionsScreen() {
                   <Icon name="information-circle-outline" size={16} color="#3b82f6" />
                   <Text style={styles.infoText}>Rejoignez une mission avant sa date limite pour gagner des FCFA.</Text>
                 </View>
-                {data.disponibles.map(m => <DispoCard key={m.id} m={m} onAccept={accept} accepting={accepting} />)}
+                {pageDisponibles.map(m => <DispoCard key={m.id} m={m} onAccept={accept} accepting={accepting} />)}
+                <Pagination page={page.disponibles} totalItems={data.disponibles.length} onChange={setTabPage} />
               </>
             )
           ) : tab === 'en_cours' ? (
             data.en_cours.length === 0 ? (
               <Empty text="Aucune mission en cours." />
             ) : (
-              data.en_cours.map(m => <EnCoursCard key={m.id} m={m} onOpen={() => navigation.navigate('MissionDetail', {id: m.id})} />)
+              <>
+                {pageEnCours.map(m => <EnCoursCard key={m.id} m={m} onOpen={() => navigation.navigate('MissionDetail', {id: m.id})} />)}
+                <Pagination page={page.en_cours} totalItems={data.en_cours.length} onChange={setTabPage} />
+              </>
             )
-          ) : data.terminees.length === 0 ? (
-            <Empty text="Aucune mission terminée." />
           ) : (
             <>
               <View style={styles.cumulCard}>
@@ -196,9 +248,70 @@ export default function MissionsScreen() {
                 </View>
                 <View style={styles.cumulIcon}><Icon name="cash-outline" size={20} color={GREEN} /></View>
               </View>
-              <View style={styles.termList}>
-                {data.terminees.map(m => <TermineeCard key={m.id} m={m} onOpen={() => navigation.navigate('MissionDetail', {id: m.id})} />)}
+
+              {/* Filtres : statut, période, recherche */}
+              <View style={styles.filterCard}>
+                <View style={styles.filterChipsRow}>
+                  {TERM_STATUS_OPTIONS.map(o => (
+                    <TouchableOpacity
+                      key={o.key}
+                      style={[styles.filterChip, termStatus === o.key && styles.filterChipOn]}
+                      onPress={() => {setTermStatus(o.key); setPage(p => ({...p, terminees: 1}));}}>
+                      <Text style={[styles.filterChipText, termStatus === o.key && styles.filterChipTextOn]}>{o.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <View style={styles.searchRow}>
+                  <Icon name="search-outline" size={16} color="#9ca3af" />
+                  <TextInput
+                    style={styles.searchInput}
+                    value={termSearch}
+                    onChangeText={t => {setTermSearch(t); setPage(p => ({...p, terminees: 1}));}}
+                    placeholder="Rechercher une campagne…"
+                    placeholderTextColor="#9ca3af"
+                  />
+                  {!!termSearch && (
+                    <TouchableOpacity onPress={() => {setTermSearch(''); setPage(p => ({...p, terminees: 1}));}}>
+                      <Icon name="close-circle" size={16} color="#9ca3af" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+                <View style={styles.dateRow}>
+                  <View style={{flex: 1}}>
+                    <DateField
+                      value={termFrom}
+                      onChange={d => {setTermFrom(d); setPage(p => ({...p, terminees: 1}));}}
+                      placeholder="Du…"
+                      maximumDate={new Date()}
+                    />
+                  </View>
+                  <View style={{flex: 1}}>
+                    <DateField
+                      value={termTo}
+                      onChange={d => {setTermTo(d); setPage(p => ({...p, terminees: 1}));}}
+                      placeholder="Au…"
+                      maximumDate={new Date()}
+                    />
+                  </View>
+                </View>
+                {(termStatus !== 'tous' || !!termFrom || !!termTo || !!termSearch) && (
+                  <TouchableOpacity onPress={resetTermFilters} style={styles.resetBtn}>
+                    <Icon name="refresh-outline" size={14} color={GREEN} />
+                    <Text style={styles.resetText}>Réinitialiser les filtres</Text>
+                  </TouchableOpacity>
+                )}
               </View>
+
+              {filteredTerminees.length === 0 ? (
+                <Empty text="Aucune mission terminée pour ces critères." />
+              ) : (
+                <>
+                  <View style={styles.termList}>
+                    {pageTerminees.map(m => <TermineeCard key={m.id} m={m} onOpen={() => navigation.navigate('MissionDetail', {id: m.id})} />)}
+                  </View>
+                  <Pagination page={page.terminees} totalItems={filteredTerminees.length} onChange={setTabPage} />
+                </>
+              )}
             </>
           )}
         </View>
@@ -307,6 +420,17 @@ const styles = StyleSheet.create({
   tabLabel: {fontSize: font.size.xs, color: '#6b7280', fontWeight: font.weight.bold},
   tabLabelActive: {color: '#fff'},
   tabCount: {fontSize: 10, color: '#9ca3af'},
+  filterCard: {backgroundColor: '#fff', borderRadius: 16, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#f3f4f6', gap: 10},
+  filterChipsRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 6},
+  filterChip: {paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: '#f3f4f6'},
+  filterChipOn: {backgroundColor: GREEN},
+  filterChipText: {fontSize: 10, color: '#6b7280', fontWeight: font.weight.bold},
+  filterChipTextOn: {color: '#fff'},
+  searchRow: {flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, paddingHorizontal: 12, height: 42},
+  searchInput: {flex: 1, color: '#1f2937', fontSize: font.size.sm, padding: 0},
+  dateRow: {flexDirection: 'row', gap: 10},
+  resetBtn: {flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start'},
+  resetText: {color: GREEN, fontSize: font.size.xs, fontWeight: font.weight.bold},
   tabBadge: {position: 'absolute', top: 6, right: 10, width: 16, height: 16, borderRadius: 8, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center'},
   tabBadgeText: {fontSize: 10, fontWeight: font.weight.bold, color: GREEN},
   loader: {paddingVertical: 60, alignItems: 'center'},

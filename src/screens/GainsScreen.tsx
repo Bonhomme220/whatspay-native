@@ -14,9 +14,11 @@ import {useFocusEffect} from '@react-navigation/native';
 import {fetchGains, GainsResponse, GainTransaction} from '../api/gains';
 import {api, apiErrorMessage} from '../api/client';
 import Icon from '../components/Icon';
+import Pagination from '../components/Pagination';
 import {font} from '../theme';
 
 const GREEN = '#16a34a';
+const PAGE_SIZE = 10;
 type Filter = 'tous' | 'gains' | 'retraits';
 
 const fmt = (n?: number | null) => Math.round(Number(n ?? 0)).toLocaleString('fr-FR');
@@ -38,6 +40,7 @@ export default function GainsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<Filter>('tous');
+  const [page, setPage] = useState(1);
   const [detailTx, setDetailTx] = useState<GainTransaction | null>(null);
   const [showWithdraw, setShowWithdraw] = useState(false);
 
@@ -67,6 +70,8 @@ export default function GainsScreen() {
   const filtered = filter === 'gains' ? transactions.filter(t => t.type === 'Crédit')
     : filter === 'retraits' ? transactions.filter(t => t.type !== 'Crédit')
     : transactions;
+  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const changeFilter = (f: Filter) => { setFilter(f); setPage(1); };
 
   return (
     <View style={styles.screen}>
@@ -136,7 +141,7 @@ export default function GainsScreen() {
           <View style={styles.histHead}>
             <Text style={styles.histTitle}>Historique</Text>
             {(['tous', 'gains', 'retraits'] as Filter[]).map(f => (
-              <TouchableOpacity key={f} style={[styles.filterChip, filter === f && styles.filterChipOn]} onPress={() => setFilter(f)}>
+              <TouchableOpacity key={f} style={[styles.filterChip, filter === f && styles.filterChipOn]} onPress={() => changeFilter(f)}>
                 <Text style={[styles.filterText, filter === f && styles.filterTextOn]}>{f.charAt(0).toUpperCase() + f.slice(1)}</Text>
               </TouchableOpacity>
             ))}
@@ -145,7 +150,7 @@ export default function GainsScreen() {
           {filtered.length === 0 ? (
             <View style={styles.emptyTx}><Text style={styles.emptyTxText}>Aucune transaction.</Text></View>
           ) : (
-            filtered.map(t => {
+            pageItems.map(t => {
               const isCredit = t.type === 'Crédit';
               const badge = statusBadge(t.status);
               return (
@@ -167,6 +172,7 @@ export default function GainsScreen() {
               );
             })
           )}
+          <Pagination page={page} totalItems={filtered.length} onChange={setPage} />
         </View>
       </ScrollView>
 
