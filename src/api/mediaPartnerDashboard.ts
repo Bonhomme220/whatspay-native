@@ -30,6 +30,8 @@ export interface MediaPartnerDashboardMissionsStats {
 export interface MediaPartnerDashboardData {
   channel_name: string;
   status: MediaPartnerStatus;
+  onboarding_status: 'pending' | 'approved' | 'rejected';
+  rejection_reason: string | null;
   current_tier: MediaPartnerTier | null;
   reached_accounts_30d: number;
   consecutive_missed_recaptures: number;

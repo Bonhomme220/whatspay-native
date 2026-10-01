@@ -21,6 +21,7 @@ import {colors, font, spacing} from '../theme';
 import {TextField} from '../components/ui';
 import {Select} from '../components/Select';
 import {apiErrorMessage} from '../api/client';
+import {useAuth} from '../context/AuthContext';
 import {
   MediaPartnerAccountType,
   MediaPartnerImage,
@@ -39,6 +40,7 @@ import {
 type Props = NativeStackScreenProps<AuthStackParamList, 'RegisterMediaPartner'>;
 
 const GREEN = '#1ba24b';
+const MAX_SECONDARY_CATEGORIES = 3;
 const STEPS = ['Identité', 'Chaîne', 'Couverture', 'Justificatifs', 'Sécurité'];
 
 const ACCOUNT_TYPES: Ref[] = [
@@ -108,6 +110,7 @@ function ImageUploadField({
 }
 
 export default function RegisterMediaPartnerScreen({navigation}: Props) {
+  const {applyAuth} = useAuth();
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -132,7 +135,7 @@ export default function RegisterMediaPartnerScreen({navigation}: Props) {
   const [channelLink, setChannelLink] = useState('');
   const [accountType, setAccountType] = useState('');
   const [channelCategoryId, setChannelCategoryId] = useState('');
-  const [channelCategorySecondaryId, setChannelCategorySecondaryId] = useState('');
+  const [secondaryCategoryIds, setSecondaryCategoryIds] = useState<string[]>([]);
   const [langId, setLangId] = useState('');
   const [publishFrequency, setPublishFrequency] = useState('');
   const [followersCount, setFollowersCount] = useState('');
@@ -146,6 +149,7 @@ export default function RegisterMediaPartnerScreen({navigation}: Props) {
   const [screenshotChannelPage, setScreenshotChannelPage] = useState<MediaPartnerImage | null>(null);
   const [screenshotCouverture, setScreenshotCouverture] = useState<MediaPartnerImage | null>(null);
   const [screenshotFollowers, setScreenshotFollowers] = useState<MediaPartnerImage | null>(null);
+  const [screenshotAdminPage, setScreenshotAdminPage] = useState<MediaPartnerImage | null>(null);
 
   // Étape 4 : Sécurité
   const [password, setPassword] = useState('');
@@ -167,6 +171,19 @@ export default function RegisterMediaPartnerScreen({navigation}: Props) {
       } catch {}
     })();
   }, []);
+
+  const onPrincipalCategoryChange = (v: string) => {
+    setChannelCategoryId(v);
+    setSecondaryCategoryIds(ids => ids.filter(id => id !== v));
+  };
+
+  const toggleSecondaryCategory = (id: string) => {
+    setSecondaryCategoryIds(ids => {
+      if (ids.includes(id)) return ids.filter(x => x !== id);
+      if (ids.length >= MAX_SECONDARY_CATEGORIES) return ids;
+      return [...ids, id];
+    });
+  };
 
   const addCoverageRow = () => setCoverage(rows => [...rows, {countryId: '', percentage: ''}]);
   const removeCoverageRow = (i: number) => setCoverage(rows => rows.filter((_, idx) => idx !== i));
@@ -231,6 +248,7 @@ export default function RegisterMediaPartnerScreen({navigation}: Props) {
       if (!screenshotChannelPage) return 'Ajoute la capture de la page de ta chaîne.';
       if (!screenshotCouverture) return "Ajoute la capture de l'onglet Couverture.";
       if (!screenshotFollowers) return "Ajoute la capture de l'onglet Followers.";
+      if (!screenshotAdminPage) return 'Ajoute la capture de la page Admin de ta chaîne (Étape 7).';
     }
     if (step === 4) {
       if (!/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(password))
@@ -257,7 +275,7 @@ export default function RegisterMediaPartnerScreen({navigation}: Props) {
   };
 
   const submit = async () => {
-    if (!screenshotChannelPage || !screenshotCouverture || !screenshotFollowers) return;
+    if (!screenshotChannelPage || !screenshotCouverture || !screenshotFollowers || !screenshotAdminPage) return;
     setBusy(true);
     try {
       const res = await registerMediaPartner({
@@ -273,7 +291,7 @@ export default function RegisterMediaPartnerScreen({navigation}: Props) {
         channel_link: channelLink.trim(),
         account_type: accountType as MediaPartnerAccountType,
         channel_category_id: channelCategoryId,
-        channel_category_secondary_id: channelCategorySecondaryId || undefined,
+        channel_category_secondary_ids: secondaryCategoryIds,
         lang_id: langId,
         publish_frequency: publishFrequency as MediaPartnerPublishFrequency,
         followers_count: parseInt(followersCount, 10),
@@ -285,12 +303,17 @@ export default function RegisterMediaPartnerScreen({navigation}: Props) {
         screenshot_channel_page: screenshotChannelPage,
         screenshot_couverture: screenshotCouverture,
         screenshot_followers: screenshotFollowers,
+        screenshot_admin_page: screenshotAdminPage,
       });
-      Alert.alert(
-        'Inscription réussie',
-        res.message ?? 'Inscription réussie. Votre profil de chaîne est en attente de validation par notre équipe.',
-        [{text: 'OK', onPress: () => navigation.navigate('Login')}],
-      );
+      if (res.token && res.user && res.profil) {
+        await applyAuth(res.token, res.user, res.profil);
+      } else {
+        Alert.alert(
+          'Inscription réussie',
+          res.message ?? 'Inscription réussie. Votre profil de chaîne est en attente de validation par notre équipe.',
+          [{text: 'OK', onPress: () => navigation.navigate('Login')}],
+        );
+      }
     } catch (e) {
       setError(apiErrorMessage(e, 'Inscription impossible.'));
     } finally {
@@ -345,8 +368,30 @@ export default function RegisterMediaPartnerScreen({navigation}: Props) {
                   <TextField label="Nom de la chaîne" value={channelName} onChangeText={setChannelName} placeholder="Ex : Actu Bénin" />
                   <TextField label="Lien de la chaîne" value={channelLink} onChangeText={setChannelLink} placeholder="https://whatsapp.com/channel/..." autoCapitalize="none" keyboardType="url" />
                   <Select label="Type de compte" options={ACCOUNT_TYPES} value={accountType} onChange={setAccountType} placeholder="Sélectionnez un type de compte" />
-                  <Select label="Catégorie principale" options={channelCategories} value={channelCategoryId} onChange={setChannelCategoryId} placeholder="Sélectionnez une catégorie" />
-                  <Select label="Catégorie secondaire (facultatif)" options={channelCategories} value={channelCategorySecondaryId} onChange={setChannelCategorySecondaryId} placeholder="Sélectionnez une catégorie" />
+                  <Select label="Catégorie principale" options={channelCategories} value={channelCategoryId} onChange={onPrincipalCategoryChange} placeholder="Sélectionnez une catégorie" />
+                  <Text style={styles.label}>
+                    Catégories secondaires (facultatif, {secondaryCategoryIds.length}/{MAX_SECONDARY_CATEGORIES})
+                  </Text>
+                  <View style={styles.checkList}>
+                    {channelCategories.filter(c => c.id !== channelCategoryId).map(c => {
+                      const checked = secondaryCategoryIds.includes(c.id);
+                      const disabled = !checked && secondaryCategoryIds.length >= MAX_SECONDARY_CATEGORIES;
+                      return (
+                        <TouchableOpacity
+                          key={c.id}
+                          style={[styles.checkRow, disabled && {opacity: 0.4}]}
+                          disabled={disabled}
+                          onPress={() => toggleSecondaryCategory(c.id)}
+                          activeOpacity={0.7}>
+                          <View style={[styles.checkbox, checked && styles.checkboxOn]}>
+                            {checked && <Text style={styles.checkboxMark}>✓</Text>}
+                          </View>
+                          <Text style={styles.checkLabel}>{c.name}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                  <Text style={styles.hint}>Jusqu'à {MAX_SECONDARY_CATEGORIES} thématiques secondaires.</Text>
                   <Select label="Langue de diffusion" options={langs} value={langId} onChange={setLangId} placeholder="Sélectionnez une langue" />
                   <Select label="Fréquence de publication" options={PUBLISH_FREQUENCIES} value={publishFrequency} onChange={setPublishFrequency} placeholder="Sélectionnez une fréquence" />
                   <TextField label="Nombre de followers" value={followersCount} onChangeText={setFollowersCount} placeholder="Ex : 5000" keyboardType="number-pad" />
@@ -426,6 +471,12 @@ export default function RegisterMediaPartnerScreen({navigation}: Props) {
                     image={screenshotFollowers}
                     onPick={() => pickImage(setScreenshotFollowers)}
                     onRemove={() => setScreenshotFollowers(null)}
+                  />
+                  <ImageUploadField
+                    label="Étape 7 — Capture de la page Admin de votre chaîne"
+                    image={screenshotAdminPage}
+                    onPick={() => pickImage(setScreenshotAdminPage)}
+                    onRemove={() => setScreenshotAdminPage(null)}
                   />
                 </>
               )}
@@ -525,6 +576,12 @@ const styles = StyleSheet.create({
   removeBtnText: {color: '#4b5563', fontSize: font.size.sm, fontWeight: font.weight.bold},
   picker: {flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderWidth: 2, borderColor: '#e5e7eb', borderStyle: 'dashed', borderRadius: 12},
   pickerText: {color: '#6b7280', fontSize: font.size.sm},
+  checkList: {borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, backgroundColor: colors.inputBg, overflow: 'hidden', marginBottom: spacing.xs},
+  checkRow: {flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: '#e5e7eb'},
+  checkbox: {width: 18, height: 18, borderRadius: 4, borderWidth: 1.5, borderColor: '#9ca3af', alignItems: 'center', justifyContent: 'center'},
+  checkboxOn: {backgroundColor: GREEN, borderColor: GREEN},
+  checkboxMark: {color: '#fff', fontSize: 12, fontWeight: font.weight.bold},
+  checkLabel: {color: '#374151', fontSize: font.size.sm, flex: 1},
   nav: {flexDirection: 'row', gap: 12, marginTop: 8},
   btnBack: {flex: 1, paddingVertical: 14, borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb', alignItems: 'center'},
   btnBackText: {color: '#6b7280', fontSize: font.size.md, fontWeight: font.weight.bold},

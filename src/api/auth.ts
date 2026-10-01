@@ -149,7 +149,7 @@ export interface RegisterMediaPartnerPayload {
   channel_link: string;
   account_type: MediaPartnerAccountType;
   channel_category_id: string;
-  channel_category_secondary_id?: string;
+  channel_category_secondary_ids?: string[];
   lang_id: string;
   publish_frequency: MediaPartnerPublishFrequency;
   followers_count: number;
@@ -159,6 +159,7 @@ export interface RegisterMediaPartnerPayload {
   screenshot_channel_page: MediaPartnerImage;
   screenshot_couverture: MediaPartnerImage;
   screenshot_followers: MediaPartnerImage;
+  screenshot_admin_page: MediaPartnerImage;
 }
 
 export interface RegisterMediaPartnerResult {
@@ -170,8 +171,9 @@ export interface RegisterMediaPartnerResult {
 
 /**
  * POST /auth/register-media-partner — inscription Partenaire Média (chaîne WhatsApp),
- * multipart/form-data (identité + infos chaîne + couverture pays + 3 captures d'écran).
- * Le compte créé est en attente de validation admin : pas d'auto-login/dashboard côté app.
+ * multipart/form-data (identité + infos chaîne + couverture pays + 4 captures d'écran).
+ * Le backend renvoie un token : le compte est connecté immédiatement, en attente de
+ * validation admin (banni visible sur le dashboard Partenaire Média tant que pending).
  */
 export async function registerMediaPartner(
   payload: RegisterMediaPartnerPayload,
@@ -189,9 +191,9 @@ export async function registerMediaPartner(
   form.append('channel_link', payload.channel_link);
   form.append('account_type', payload.account_type);
   form.append('channel_category_id', payload.channel_category_id);
-  if (payload.channel_category_secondary_id) {
-    form.append('channel_category_secondary_id', payload.channel_category_secondary_id);
-  }
+  (payload.channel_category_secondary_ids ?? []).forEach(id => {
+    form.append('channel_category_secondary_ids[]', id);
+  });
   form.append('lang_id', payload.lang_id);
   form.append('publish_frequency', payload.publish_frequency);
   form.append('followers_count', String(payload.followers_count));
@@ -213,6 +215,7 @@ export async function registerMediaPartner(
   appendImage('screenshot_channel_page', payload.screenshot_channel_page);
   appendImage('screenshot_couverture', payload.screenshot_couverture);
   appendImage('screenshot_followers', payload.screenshot_followers);
+  appendImage('screenshot_admin_page', payload.screenshot_admin_page);
 
   const {data} = await api.post<RegisterMediaPartnerResult>('/auth/register-media-partner', form, {
     headers: {'Content-Type': 'multipart/form-data'},

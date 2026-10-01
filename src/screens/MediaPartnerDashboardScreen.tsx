@@ -101,6 +101,24 @@ export default function MediaPartnerDashboardScreen() {
 
         {/* Bannières globales */}
         <View style={{paddingHorizontal: spacing.md, paddingTop: spacing.sm}}>
+          {data?.onboarding_status === 'pending' && (
+            <View style={styles.pendingBanner}>
+              <Text style={styles.pendingIcon}>⏳</Text>
+              <View style={{flex: 1}}>
+                <Text style={styles.pendingTitle}>Inscription en attente de validation</Text>
+                <Text style={styles.pendingText}>Votre chaîne sera activée dès que notre équipe aura vérifié votre dossier. Vous serez notifié(e) dès la validation.</Text>
+              </View>
+            </View>
+          )}
+          {data?.onboarding_status === 'rejected' && (
+            <View style={styles.rejectedBanner}>
+              <Text style={styles.pendingIcon}>✕</Text>
+              <View style={{flex: 1}}>
+                <Text style={styles.rejectedTitle}>Inscription non validée</Text>
+                {!!data.rejection_reason && <Text style={styles.rejectedText}>{data.rejection_reason}</Text>}
+              </View>
+            </View>
+          )}
           <KycBanner />
         </View>
 
@@ -221,6 +239,14 @@ const styles = StyleSheet.create({
   center: {flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb'},
   errBox: {marginHorizontal: spacing.md, backgroundColor: '#fef2f2', borderRadius: 12, padding: spacing.md, marginTop: spacing.sm},
   errText: {color: '#dc2626', fontSize: font.size.sm},
+
+  pendingBanner: {flexDirection: 'row', gap: 10, backgroundColor: '#fffbeb', borderWidth: 1, borderColor: '#fde68a', borderRadius: 12, padding: 12, marginBottom: spacing.sm},
+  pendingIcon: {fontSize: 18, lineHeight: 20},
+  pendingTitle: {color: '#92400e', fontSize: font.size.sm, fontWeight: font.weight.bold},
+  pendingText: {color: '#b45309', fontSize: font.size.xs, marginTop: 2, lineHeight: 16},
+  rejectedBanner: {flexDirection: 'row', gap: 10, backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca', borderRadius: 12, padding: 12, marginBottom: spacing.sm},
+  rejectedTitle: {color: '#991b1b', fontSize: font.size.sm, fontWeight: font.weight.bold},
+  rejectedText: {color: '#b91c1c', fontSize: font.size.xs, marginTop: 2, lineHeight: 16},
 
   hero: {backgroundColor: GREEN, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 56},
   heroTop: {flexDirection: 'row', alignItems: 'flex-start', gap: 8},
