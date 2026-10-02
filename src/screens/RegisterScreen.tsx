@@ -248,7 +248,7 @@ export default function RegisterScreen({navigation}: Props) {
         ambassador_code: ambassadorCode.trim() || undefined,
       });
       if (res.token && res.user && res.profil) {
-        await applyAuth(res.token, res.user, res.profil);
+        await applyAuth(res.token, res.user, res.profil, {requireWhatsAppStep: true});
       } else {
         Alert.alert('Inscription réussie', res.message ?? 'Tu peux maintenant te connecter.', [
           {text: 'OK', onPress: () => navigation.navigate('Login')},

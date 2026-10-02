@@ -19,4 +19,5 @@ export const STORAGE_KEYS = {
   token: '@whatspay/token',
   user: '@whatspay/user',
   profil: '@whatspay/profil',
+  pendingWhatsAppStep: '@whatspay/pending_whatsapp_step',
 } as const;
